@@ -67,7 +67,7 @@ def get_dmv_office_nearby_data_api(zipcode):
 
 
 #find the earliest date and add weekday information
-def find_earliest_date(formated_input_date,formated_date_from_all_list):
+def find_earliest_date(formated_input_date,formated_date_from_all_list, office_location):
     old_day = formated_input_date.strftime("%A")
     if formated_date_from_all_list < formated_input_date:
 
@@ -77,7 +77,7 @@ def find_earliest_date(formated_input_date,formated_date_from_all_list):
 
         print(f"The date you have on hand is on {formated_input_date} {old_day}!")
 
-        print(f"I found ONE earlier than what you have!!!!  The new date is on {formated_date_from_all_list} {new_day} and time slots as followings: ")
+        print(f"I found ONE earlier than what you have!!!!\n Location : {office_location} ,\n Date : {formated_date_from_all_list} {new_day},\n Time slots as followings: ")
         for time_slot in time_slots:
             print(time_slot)
     else:
@@ -151,8 +151,12 @@ if isinstance(user_input_date_zipcode,list):
     # for date in all_dates_list:
     #     print(f"改變後:{date} and {type(date)}")
 
-    for formated_date_from_all_list in all_dates_list:
-        print(find_earliest_date(formated_input_date,formated_date_from_all_list))
+    for i in range(len(all_dates_list)):
+        office_location = list(earliest_date_with_office.keys())
+        print(find_earliest_date(formated_input_date,all_dates_list[i],office_location[i]))
+
+    # for formated_date_from_all_list in all_dates_list:
+    #     print(find_earliest_date(formated_input_date,formated_date_from_all_list))
 
     # #get the earliest available date from sj location and conver into dattime
     # available_earliest_date_from_sj = get_sj_date_data_api()
