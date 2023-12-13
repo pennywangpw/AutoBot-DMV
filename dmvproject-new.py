@@ -29,18 +29,18 @@ def get_date_data_api(dmv_field_office_public_id):
     response = requests.get(url)
 
     available_datas_data = response.json()
-    print(f"確認拿到的 dmv_field_office_public_id {available_datas_data}")
+
 
     earliest_available_date = available_datas_data[0]
 
     return earliest_available_date
 
 #API- find available time slot
-def get_time_slot_data_api(datetime):
+def get_time_slot_data_api(dmv_field_office_public_id,datetime):
 
     date = datetime.strftime("%Y-%m-%d")
-
-    url = f"https://www.dmv.ca.gov/portal/wp-json/dmv/v1/appointment/branches/516!56b48e272ba45819d81868f440fb30eb6c406b705436cf1d101d2ea2c75c/times?date={date}&services[]=DL!b94ae07d48f4d0cff89b6fc0e0c9aea5fa2a47d11728311b7adccdef2c728&numberOfCustomers=1&ver=867712719559.5795"
+    print(f"這裡在測試get time slot api 放到url的date {date}")
+    url = f"https://www.dmv.ca.gov/portal/wp-json/dmv/v1/appointment/branches/{dmv_field_office_public_id}/times?date={date}&services[]=DL!b94ae07d48f4d0cff89b6fc0e0c9aea5fa2a47d11728311b7adccdef2c728&numberOfCustomers=1&ver=867712719559.5795"
 
     response = requests.get(url)
 
@@ -67,17 +67,20 @@ def get_dmv_office_nearby_data_api(zipcode):
 
 
 #find the earliest date and add weekday information
-def find_earliest_date(formated_input_date,formated_date_from_all_list, office_location):
+def find_earlier_date_than_user_input(formated_input_date,formated_date_from_all_list, office_obj):
     old_day = formated_input_date.strftime("%A")
     if formated_date_from_all_list < formated_input_date:
 
         new_day = formated_date_from_all_list.strftime("%A")
-        time_slots= get_time_slot_data_api(formated_date_from_all_list)
+
+        dmv_field_office_public_id = office_obj['meta']['dmv_field_office_public_id']
+        time_slots= get_time_slot_data_api(dmv_field_office_public_id,formated_date_from_all_list)
+
         print("---------------------------------------------")
 
         print(f"The date you have on hand is on {formated_input_date} {old_day}!")
 
-        print(f"I found ONE earlier than what you have!!!!\n Location : {office_location} ,\n Date : {formated_date_from_all_list} {new_day},\n Time slots as followings: ")
+        print(f"I found ONE earlier than what you have!!!!\n Location : {office_obj['slug']},\n Date : {formated_date_from_all_list} {new_day},\n Time slots as followings: ")
         for time_slot in time_slots:
             print(time_slot)
     else:
@@ -87,7 +90,6 @@ def find_earliest_date(formated_input_date,formated_date_from_all_list, office_l
 
 #input validation
 def input_validation(input_date,input_zipcode):
-    print(f"這裡是 input_validation {input_date,input_zipcode} {type(input_date)} and {type(input_zipcode)}")
     if not isinstance(input_date,str):
 
         return "The input_date should be a string type with YYYY-MM-DD"
@@ -107,7 +109,6 @@ def input_validation(input_date,input_zipcode):
 #get user input- either a reminder string or input list
 def get_input_date_zipcode():
     if len(sys.argv) == 3:
-        print(sys.argv)
         input_date = sys.argv[1]
         input_zipcode = int(sys.argv[2])
         validatetion_result = input_validation(input_date,input_zipcode)
@@ -118,6 +119,9 @@ def get_input_date_zipcode():
     else:
         return "Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087)"
 
+
+
+#GOAL: 要改搜尋其他ZIPCODE也可以WORK
 
 #get input: date & zipcode
 user_input_date_zipcode = get_input_date_zipcode()
@@ -136,35 +140,20 @@ if isinstance(user_input_date_zipcode,list):
     earliest_date_with_office = {}
     for office in nearby_dmv_offices:
         earliest_date= get_date_data_api(office['meta']["dmv_field_office_public_id"])
-        print(f"這裡是搜尋後最早的日期 {earliest_date} {type(earliest_date)}")
-        earliest_date_with_office[office['slug']] = earliest_date
-    print(f"最後結果 {earliest_date_with_office}")
+        earliest_date_with_office[office['id']] = earliest_date
+
 
     #convert dates in string type into datetime type
     all_dates_list = list(earliest_date_with_office.values())
-    print(f"all_dates_list 長什麼樣子 {all_dates_list} {type(all_dates_list)}")
+
 
     for i in range(len(all_dates_list)):
-        print(f"改變前:{all_dates_list[i]} and {type(all_dates_list[i])}")
         all_dates_list[i] = make_datetime_formate(all_dates_list[i])
 
-    # for date in all_dates_list:
-    #     print(f"改變後:{date} and {type(date)}")
-
     for i in range(len(all_dates_list)):
-        office_location = list(earliest_date_with_office.keys())
-        print(find_earliest_date(formated_input_date,all_dates_list[i],office_location[i]))
+        office_location_id = list(earliest_date_with_office.keys())
+        print(find_earlier_date_than_user_input(formated_input_date,all_dates_list[i],nearby_dmv_offices[i]))
 
-    # for formated_date_from_all_list in all_dates_list:
-    #     print(find_earliest_date(formated_input_date,formated_date_from_all_list))
-
-    # #get the earliest available date from sj location and conver into dattime
-    # available_earliest_date_from_sj = get_sj_date_data_api()
-    # formated_date_earliest_from_list = make_datetime_formate(available_earliest_date_from_sj)
-
-
-    # #compare the date you have and availble date to get the earlier date
-    # print(find_earliest_date(formated_input_date,formated_date_earliest_from_list))
 
 else:
     # print(user_input_zipcode)
