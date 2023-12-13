@@ -6,10 +6,8 @@ from datetime import datetime
 
 #make datetime formate
 def make_datetime_formate(str):
-    print("這裡是make_datetime_formate")
     split_str = str.split("-")
     datetime_formate = datetime(int(split_str[0]),int(split_str[1]),int(split_str[2][:2]))
-    print(f"---datetime_formate {datetime_formate} {type(datetime_formate)}")
     return datetime_formate
 
 #API -san jose location available dates list
@@ -39,7 +37,6 @@ def get_date_data_api(dmv_field_office_public_id):
 def get_time_slot_data_api(dmv_field_office_public_id,datetime):
 
     date = datetime.strftime("%Y-%m-%d")
-    print(f"這裡在測試get time slot api 放到url的date {date}")
     url = f"https://www.dmv.ca.gov/portal/wp-json/dmv/v1/appointment/branches/{dmv_field_office_public_id}/times?date={date}&services[]=DL!b94ae07d48f4d0cff89b6fc0e0c9aea5fa2a47d11728311b7adccdef2c728&numberOfCustomers=1&ver=867712719559.5795"
 
     response = requests.get(url)
@@ -80,12 +77,13 @@ def find_earlier_date_than_user_input(formated_input_date,formated_date_from_all
 
         print(f"The date you have on hand is on {formated_input_date} {old_day}!")
 
-        print(f"I found ONE earlier than what you have!!!!\n Location : {office_obj['slug']},\n Date : {formated_date_from_all_list} {new_day},\n Time slots as followings: ")
+        print(f"I found ONE earlier than what you have!!!!\n Id: {office_obj['id']} \n Location : {office_obj['slug']},\n Date : {formated_date_from_all_list} {new_day},\n Time slots as followings: ")
         for time_slot in time_slots:
-            print(time_slot)
+            return time_slot
+            # print(time_slot)
     else:
 
-        return f"Sorry, I can't find earlier one"
+        return f"Sorry, I can't find earlier one at {office_obj['id']} {office_obj['slug']}"
 
 
 #input validation
@@ -141,7 +139,7 @@ if isinstance(user_input_date_zipcode,list):
     for office in nearby_dmv_offices:
         earliest_date= get_date_data_api(office['meta']["dmv_field_office_public_id"])
         earliest_date_with_office[office['id']] = earliest_date
-
+    print(f"整理好的earliest_date_with_office {earliest_date_with_office}")
 
     #convert dates in string type into datetime type
     all_dates_list = list(earliest_date_with_office.values())
@@ -149,9 +147,6 @@ if isinstance(user_input_date_zipcode,list):
 
     for i in range(len(all_dates_list)):
         all_dates_list[i] = make_datetime_formate(all_dates_list[i])
-
-    for i in range(len(all_dates_list)):
-        office_location_id = list(earliest_date_with_office.keys())
         print(find_earlier_date_than_user_input(formated_input_date,all_dates_list[i],nearby_dmv_offices[i]))
 
 
