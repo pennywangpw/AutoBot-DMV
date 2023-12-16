@@ -1,6 +1,7 @@
 import sys
 import requests, datetime
 from datetime import datetime
+from gmailtest import send_email
 
 
 
@@ -75,12 +76,15 @@ def find_earlier_date_than_user_input(formated_input_date,formated_date_from_all
 
         print("---------------------------------------------")
 
-        print(f"The date you have on hand is on {formated_input_date} {old_day}!")
+        available_time_slots = []
 
-        print(f"I found ONE earlier than what you have!!!!\n Id: {office_obj['id']} \n Location : {office_obj['slug']},\n Date : {formated_date_from_all_list} {new_day},\n Time slots as followings: ")
         for time_slot in time_slots:
-            return time_slot
-            # print(time_slot)
+            available_time_slots.append(time_slot)
+
+        time_slots_str = '\n'.join(available_time_slots)
+        information = f"The date you have on hand is on {formated_input_date} {old_day}!\n I found earlier time than what you have!!!!\n Id: {office_obj['id']} \n Location : {office_obj['slug']},\n Date : {formated_date_from_all_list} {new_day},\n Time slots as followings: \n{time_slots_str}"
+        return information
+
     else:
 
         return f"Sorry, I can't find earlier one at {office_obj['id']} {office_obj['slug']}"
@@ -119,7 +123,7 @@ def get_input_date_zipcode():
 
 
 
-#GOAL: 要改搜尋其他ZIPCODE也可以WORK
+#GOAL: 我想要信件可以收到一封就好,一封包含所有available ealier time
 
 #get input: date & zipcode
 user_input_date_zipcode = get_input_date_zipcode()
@@ -134,20 +138,42 @@ if isinstance(user_input_date_zipcode,list):
     #get all nearby dmv offices
     nearby_dmv_offices = get_dmv_office_nearby_data_api(user_input_date_zipcode[2])
 
-    #get earliest date in each nearby dmv offices
-    earliest_date_with_office = {}
+
+    #add attribute - 1. earliest_available_date in each nearby_dmv_offices & 2. information with find_earlier_date_than_user_input information
     for office in nearby_dmv_offices:
         earliest_date= get_date_data_api(office['meta']["dmv_field_office_public_id"])
-        earliest_date_with_office[office['id']] = earliest_date
-    print(f"整理好的earliest_date_with_office {earliest_date_with_office}")
+        office["earliest_available_date"] = make_datetime_formate(earliest_date)
+        information = find_earlier_date_than_user_input(formated_input_date,office["earliest_available_date"],office)
+        office["information"] = information
+        print(f"這裡是x :\n{information}")
+
+    print(f"都加完後的nearby_dmv_offices {nearby_dmv_offices}")
+    #send an email with all avilable ealier time with locations information
+    send_email(nearby_dmv_offices)
+
+
+
+    #get earliest date in each nearby dmv offices
+    # earliest_date_with_office = {}
+    # for office in nearby_dmv_offices:
+    #     earliest_date= get_date_data_api(office['meta']["dmv_field_office_public_id"])
+    #     earliest_date_with_office[office['id']] = earliest_date
+    # print(f"所有附近的nearby_dmv_offices :{nearby_dmv_offices}")
+    # print(f"整理好的earliest_date_with_office {earliest_date_with_office}")
 
     #convert dates in string type into datetime type
-    all_dates_list = list(earliest_date_with_office.values())
 
 
-    for i in range(len(all_dates_list)):
-        all_dates_list[i] = make_datetime_formate(all_dates_list[i])
-        print(find_earlier_date_than_user_input(formated_input_date,all_dates_list[i],nearby_dmv_offices[i]))
+
+    # all_dates_list = list(earliest_date_with_office.values())
+
+
+    # for i in range(len(all_dates_list)):
+    #     all_dates_list[i] = make_datetime_formate(all_dates_list[i])
+    #     # print(find_earlier_date_than_user_input(formated_input_date,all_dates_list[i],nearby_dmv_offices[i]))
+    #     information = find_earlier_date_than_user_input(formated_input_date,all_dates_list[i],nearby_dmv_offices[i])
+    #     print(f"這裡是x :\n{information}")
+    #     # send_email(information)
 
 
 else:
