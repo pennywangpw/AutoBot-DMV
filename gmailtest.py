@@ -1,4 +1,6 @@
 import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 smtp_server_str = "smtp.gmail.com"
 port = 465  # email port to use SSL
@@ -7,29 +9,32 @@ receiver_email= "pennypython2023@gmail.com"
 password = input("Please enter your password: ")
 
 
-def send_email(dmv_list):
-    print(f"這裡傳進來的是整包dmv_obj {dmv_list}")
-    msg_to_user = "~~~"
+
+def send_email(formated_input_date,dmv_list):
+    old_day = formated_input_date.strftime("%A")
+    number_of_office = len(dmv_list)
+    msg_to_user = f"The date you have on hand is on {formated_input_date} {old_day}!\n I found {number_of_office} location(s) with earlier time than what you have!\n\n"
 
     for office in dmv_list:
-        msg_to_user = msg_to_user + office['information'] + "\n" +"------------------------"+ "\n"
-        # info_detail = f"Hey!!!! {office['information']}"
+        msg_to_user = msg_to_user + "------------------------"+ "\n" +office['information'] + "\n"
 
-    print(f"家完後的msg_to_user  {msg_to_user}")
+    msg = MIMEMultipart()
+    msg["Subject"] = "DMV Update"
+    msg["From"] = sender_email
+    msg["To"] = receiver_email
 
-    message = """\
-    Subject: Hi there
+    txt = f"{msg_to_user}"
+    body = MIMEText(txt, "plain")
 
-    This message is sent from Python."""
-    # message = f"Subject: Hello from Bob.Hi, this is Bob. Long time no see. {msg_to_user}"
+    msg.attach(body)
+
 
     with smtplib.SMTP_SSL(smtp_server_str, port) as smtp_server:
         smtp_server.login(sender_email, password)
         smtp_server.sendmail(
             sender_email,
             receiver_email,
-            message
-            # f'Subject: GOOD NEWS! we find an earlier time.\ntesting why this is not working tho....{msg_to_user}',
+            msg.as_string()
             )
     return "Email has been sent successfuly!"
 
