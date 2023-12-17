@@ -1,6 +1,7 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 
 smtp_server_str = "smtp.gmail.com"
 port = 465  # email port to use SSL
@@ -23,10 +24,17 @@ def send_email(formated_input_date,dmv_list):
     msg["From"] = sender_email
     msg["To"] = receiver_email
 
+    #attach text
     txt = f"{msg_to_user}"
     body = MIMEText(txt, "plain")
 
     msg.attach(body)
+
+    #attach picture
+    with open("./images.jpg","rb") as file:
+        img = file.read()
+    attach_file = MIMEApplication(img, Name ="cute.jpg")
+    msg.attach(attach_file)
 
 
     with smtplib.SMTP_SSL(smtp_server_str, port) as smtp_server:
@@ -37,18 +45,3 @@ def send_email(formated_input_date,dmv_list):
             msg.as_string()
             )
     return "Email has been sent successfuly!"
-
-
-
-
-## method 2
-# import smtplib, ssl
-
-# port = 465  # For SSL
-# password = input("Type your password and press enter: ")
-
-# # Create a secure SSL context
-# context = ssl.create_default_context()
-
-# with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
-#     server.login("pennypython2023@gmail.com", password)
