@@ -6,7 +6,7 @@ from shared_data import nearby_dmv_offices
 
 
 
-TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.GHRAcH.zpeMJCrMf02WYJVgevvhMFBtgKPbgWV48fvJaM'
+TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.GIf3zY.pFG2ET_bEssLgfX7aKGqRui-vTIfY_DlysylrU'
 CHANNEL_ID = 1186427997851488266
 
 # Create an instance of the bot
@@ -42,7 +42,6 @@ async def add(ctx, x,y):
 # @bot.command(name='on_message')
 @bot.event
 async def on_message(message):
-    print(f"message 是什麼 {message}")
     print(f"message content是什麼 {message.content}")
     print(f"是否有帶進來 nearby_dmv_offices {nearby_dmv_offices}")
     if message.author == bot.user:

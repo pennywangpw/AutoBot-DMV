@@ -4,12 +4,17 @@ from datetime import datetime
 from gmailtest import send_email
 from discord_bot_webhook import send_notification_through_discord
 import discord
-from discord_bot import bot
 from api import get_sj_date_data_api,get_date_data_api,get_time_slot_data_api,get_dmv_office_nearby_data_api
-from shared_data import nearby_dmv_offices
+# from shared_data import set_nearby_dmv_offices_data
+from discord.ext import commands
+
 
 #interactive bot
-TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.GHRAcH.zpeMJCrMf02WYJVgevvhMFBtgKPbgWV48fvJaM'
+TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.Gr8iLF.5mG7J5RWakUcVoC4j_kaHcWELXBTp6X5nitxMc'
+CHANNEL_ID = 1186427997851488266
+
+
+
 
 
 #make datetime formate
@@ -78,58 +83,85 @@ def get_input_date_zipcode():
 
 
 
-#測試bot
-# Check if the bot is ready
-@bot.event
-async def on_ready():
-    print(f'Bot is ready: {bot.user.name} ({bot.user.id})')
 
-# Example: Send a message to trigger the !update command
-async def send_update_command():
-    # Create a context with a fake message
-    ctx = await bot.get_context(discord.Message(content='!send_notification'))
+#GOAL: 我想要信件可以收到一封就好,一封包含所有available ealier time
 
-    # Invoke the !update command
-    await bot.invoke(ctx)
+#get input: date & zipcode
+# user_input_date_zipcode = get_input_date_zipcode()
+
+
+# Create an instance of the bot
+bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+
+# Define a command for the bot
+@bot.command(name="update")
+async def update_command(ctx):
+    # Get user input date & zipcode
+    user_input_date_zipcode = get_input_date_zipcode()
+
+    # Get user input and convert into datetime
+    if isinstance(user_input_date_zipcode, list):
+
+        # Format user input date as datetime
+        formated_input_date = make_datetime_formate(user_input_date_zipcode[1])
+
+        # Get all nearby dmv offices
+        nearby_dmv_offices_data = get_dmv_office_nearby_data_api(user_input_date_zipcode[2])
+
+        # Add attribute - 1. earliest_available_date in each nearby_dmv_offices_data & 2. information with find_earlier_date_than_user_input information
+        for office in nearby_dmv_offices_data:
+            earliest_date = get_date_data_api(office["meta"]["dmv_field_office_public_id"])
+            office["earliest_available_date"] = make_datetime_formate(earliest_date)
+            information = find_earlier_date_than_user_input(formated_input_date, office["earliest_available_date"], office)
+            office["information"] = information
+
+        # Send an email with all available earlier time with locations information
+        send_email(formated_input_date, nearby_dmv_offices_data)
+        send_notification_through_discord(formated_input_date, nearby_dmv_offices_data)
+        print(f"office['information'] {office['information']}")
+        # Respond to the Discord user with the data
+        response = "\n".join([f"{office['information']}" for office in nearby_dmv_offices_data])
+        await ctx.send(response)
+
+    else:
+        await ctx.send(str(user_input_date_zipcode))
 
 # Run the bot
 bot.run(TOKEN)
 
 
 
-#GOAL: 我想要信件可以收到一封就好,一封包含所有available ealier time
-
-#get input: date & zipcode
-user_input_date_zipcode = get_input_date_zipcode()
-
-
-#get user input and convert into datatime
-if isinstance(user_input_date_zipcode,list):
-
-    #format user input date as datetime
-    formated_input_date = make_datetime_formate(user_input_date_zipcode[1])
-
-    #get all nearby dmv offices
-    nearby_dmv_offices_data = get_dmv_office_nearby_data_api(user_input_date_zipcode[2])
-
-
-    #add attribute - 1. earliest_available_date in each nearby_dmv_offices_data & 2. information with find_earlier_date_than_user_input information
-    for office in nearby_dmv_offices_data:
-        earliest_date= get_date_data_api(office['meta']["dmv_field_office_public_id"])
-        office["earliest_available_date"] = make_datetime_formate(earliest_date)
-        information = find_earlier_date_than_user_input(formated_input_date,office["earliest_available_date"],office)
-        office["information"] = information
-        nearby_dmv_offices.append(office)
-
-
-
-    #send an email with all avilable ealier time with locations information
-    send_email(formated_input_date,nearby_dmv_offices_data)
-    send_notification_through_discord(formated_input_date,nearby_dmv_offices_data)
 
 
 
 
-else:
-    # print(user_input_zipcode)
-    print(user_input_date_zipcode)
+
+
+# #get user input and convert into datatime
+# if isinstance(user_input_date_zipcode,list):
+
+#     #format user input date as datetime
+#     formated_input_date = make_datetime_formate(user_input_date_zipcode[1])
+
+#     #get all nearby dmv offices
+#     nearby_dmv_offices_data = get_dmv_office_nearby_data_api(user_input_date_zipcode[2])
+
+
+#     #add attribute - 1. earliest_available_date in each nearby_dmv_offices_data & 2. information with find_earlier_date_than_user_input information
+#     for office in nearby_dmv_offices_data:
+#         earliest_date= get_date_data_api(office['meta']["dmv_field_office_public_id"])
+#         office["earliest_available_date"] = make_datetime_formate(earliest_date)
+#         information = find_earlier_date_than_user_input(formated_input_date,office["earliest_available_date"],office)
+#         office["information"] = information
+
+
+
+#     #send an email with all avilable ealier time with locations information
+#     send_email(formated_input_date,nearby_dmv_offices_data)
+#     send_notification_through_discord(formated_input_date,nearby_dmv_offices_data)
+
+
+
+# else:
+#     # print(user_input_zipcode)
+#     print(user_input_date_zipcode)
