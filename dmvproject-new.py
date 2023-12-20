@@ -2,7 +2,14 @@ import sys
 import requests, datetime
 from datetime import datetime
 from gmailtest import send_email
+from discord_bot_webhook import send_notification_through_discord
+import discord
+from discord_bot import bot
+from api import get_sj_date_data_api,get_date_data_api,get_time_slot_data_api,get_dmv_office_nearby_data_api
+from shared_data import nearby_dmv_offices
 
+#interactive bot
+TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.GHRAcH.zpeMJCrMf02WYJVgevvhMFBtgKPbgWV48fvJaM'
 
 
 #make datetime formate
@@ -10,57 +17,6 @@ def make_datetime_formate(str):
     split_str = str.split("-")
     datetime_formate = datetime(int(split_str[0]),int(split_str[1]),int(split_str[2][:2]))
     return datetime_formate
-
-#API -san jose location available dates list
-def get_sj_date_data_api():
-    url = "https://www.dmv.ca.gov/portal/wp-json/dmv/v1/appointment/branches/516!56b48e272ba45819d81868f440fb30eb6c406b705436cf1d101d2ea2c75c/dates?services[]=DL!b94ae07d48f4d0cff89b6fc0e0c9aea5fa2a47d11728311b7adccdef2c728&numberOfCustomers=1&ver=977125805110.5748"
-    response = requests.get(url)
-
-    data = response.json()
-
-    return data[0]
-
-
-#API -locations available dates list
-def get_date_data_api(dmv_field_office_public_id):
-
-    url = f"https://www.dmv.ca.gov/portal/wp-json/dmv/v1/appointment/branches/{dmv_field_office_public_id}/dates?services[]=DL!b94ae07d48f4d0cff89b6fc0e0c9aea5fa2a47d11728311b7adccdef2c728&numberOfCustomers=1&ver=977125805110.5748"
-    response = requests.get(url)
-
-    available_datas_data = response.json()
-
-
-    earliest_available_date = available_datas_data[0]
-    return earliest_available_date
-
-#API- find available time slot
-def get_time_slot_data_api(dmv_field_office_public_id,datetime):
-
-    date = datetime.strftime("%Y-%m-%d")
-    url = f"https://www.dmv.ca.gov/portal/wp-json/dmv/v1/appointment/branches/{dmv_field_office_public_id}/times?date={date}&services[]=DL!b94ae07d48f4d0cff89b6fc0e0c9aea5fa2a47d11728311b7adccdef2c728&numberOfCustomers=1&ver=867712719559.5795"
-
-    response = requests.get(url)
-
-    data = response.json()
-
-    return data
-
-#API- find nearby DMV office by zipcode
-def get_dmv_office_nearby_data_api(zipcode):
-
-    url = f"https://www.dmv.ca.gov/portal/wp-json/dmv/v1/field-offices?q={zipcode}"
-    response = requests.get(url)
-    data = response.json()
-    return data
-    # dmv_office_nearby = []
-    # for office in data:
-    #     print(f"office {office}")
-    #     if office["distance"] < 7:
-    #         dmv_office_nearby.append(office)
-    # print(f"檢查是否在範圍內7 miles的dmv {dmv_office_nearby}")
-    # return dmv_office_nearby
-
-
 
 
 #find the earliest date and add weekday information
@@ -122,6 +78,25 @@ def get_input_date_zipcode():
 
 
 
+#測試bot
+# Check if the bot is ready
+@bot.event
+async def on_ready():
+    print(f'Bot is ready: {bot.user.name} ({bot.user.id})')
+
+# Example: Send a message to trigger the !update command
+async def send_update_command():
+    # Create a context with a fake message
+    ctx = await bot.get_context(discord.Message(content='!send_notification'))
+
+    # Invoke the !update command
+    await bot.invoke(ctx)
+
+# Run the bot
+bot.run(TOKEN)
+
+
+
 #GOAL: 我想要信件可以收到一封就好,一封包含所有available ealier time
 
 #get input: date & zipcode
@@ -135,20 +110,24 @@ if isinstance(user_input_date_zipcode,list):
     formated_input_date = make_datetime_formate(user_input_date_zipcode[1])
 
     #get all nearby dmv offices
-    nearby_dmv_offices = get_dmv_office_nearby_data_api(user_input_date_zipcode[2])
+    nearby_dmv_offices_data = get_dmv_office_nearby_data_api(user_input_date_zipcode[2])
 
 
-    #add attribute - 1. earliest_available_date in each nearby_dmv_offices & 2. information with find_earlier_date_than_user_input information
-    for office in nearby_dmv_offices:
+    #add attribute - 1. earliest_available_date in each nearby_dmv_offices_data & 2. information with find_earlier_date_than_user_input information
+    for office in nearby_dmv_offices_data:
         earliest_date= get_date_data_api(office['meta']["dmv_field_office_public_id"])
         office["earliest_available_date"] = make_datetime_formate(earliest_date)
         information = find_earlier_date_than_user_input(formated_input_date,office["earliest_available_date"],office)
         office["information"] = information
+        nearby_dmv_offices.append(office)
 
 
 
     #send an email with all avilable ealier time with locations information
-    send_email(formated_input_date,nearby_dmv_offices)
+    send_email(formated_input_date,nearby_dmv_offices_data)
+    send_notification_through_discord(formated_input_date,nearby_dmv_offices_data)
+
+
 
 
 else:
