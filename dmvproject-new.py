@@ -11,8 +11,8 @@ from discord.ext import commands
 
 
 #interactive bot
-
-CHANNEL_ID = 1186427997851488266
+TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.GpHgX-.U-qE_xC0XL8E1JFVeUmVguWZIqcH2eB67_uP2c'
+# CHANNEL_ID = 1186427997851488266
 
 
 dmv_api_handler = DMVAPIHandler()
@@ -59,7 +59,7 @@ def get_input_date_zipcode():
 
 #get input: date & zipcode
 user_input_date_zipcode = get_input_date_zipcode()
-print(f"檢查 user_input_date_zipcode {user_input_date_zipcode}")
+
 
 #get user input and convert into datatime
 if isinstance(user_input_date_zipcode,list):
@@ -79,14 +79,23 @@ if isinstance(user_input_date_zipcode,list):
         office["information"] = information
 
 
-
-    #send an email with all avilable ealier time with locations information
-    # send_email(formated_input_date,nearby_dmv_offices_data)
+    #NOTIFICATION!
+    #METHOD 1.send an email with all avilable ealier time with locations information
     email_handler.send_email(formated_input_date,nearby_dmv_offices_data)
+
+    #METHOD 2.send a notification through Discord
     send_notification_through_discord(formated_input_date,nearby_dmv_offices_data)
 
+    #METHOD 3.send a notification through Discord bot
     # Create an instance of the bot
     bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+
+
+    # Bot says hi
+    @bot.event
+    async def on_ready():
+        print(f"Hello Penny! Bot is ready for you...")
+
     # Define a command for the bot
     @bot.command(name="update")
     async def update_command(ctx):
