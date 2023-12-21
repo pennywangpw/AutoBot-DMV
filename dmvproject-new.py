@@ -11,7 +11,7 @@ from discord.ext import commands
 
 
 #interactive bot
-TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.G0Y9jN.3Xoh8NisJRCr1HSImHXj5WALar22MUApA-8W0o'
+
 CHANNEL_ID = 1186427997851488266
 
 
