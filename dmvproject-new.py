@@ -11,7 +11,7 @@ from discord.ext import commands
 
 
 #interactive bot
-TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.GpHgX-.U-qE_xC0XL8E1JFVeUmVguWZIqcH2eB67_uP2c'
+
 # CHANNEL_ID = 1186427997851488266
 
 
@@ -97,7 +97,7 @@ if isinstance(user_input_date_zipcode,list):
         print(f"Hello Penny! Bot is ready for you...")
 
     # Define a command for the bot
-    @bot.command(name="update")
+    @bot.command(name="update", aliases=["UPDATE"])
     async def update_command(ctx):
         # Respond to the Discord user with the data
         old_day = formated_input_date.strftime("%A")
