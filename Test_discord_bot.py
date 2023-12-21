@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
-from api import get_sj_date_data_api,get_date_data_api,get_time_slot_data_api,get_dmv_office_nearby_data_api
-from shared_data import nearby_dmv_offices
+from dmv_practice.DMV_API_Handler import get_sj_date_data_api,get_date_data_api,get_time_slot_data_api,get_dmv_office_nearby_data_api
+from dmv_practice.Test_shared_data import nearby_dmv_offices
 
 
 

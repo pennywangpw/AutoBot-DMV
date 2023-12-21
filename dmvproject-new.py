@@ -2,54 +2,23 @@ import sys
 import requests, datetime
 from datetime import datetime
 # from gmailtest import send_email
-from email_class import EmailHandler
+from Email_Handler import EmailHandler
 from discord_bot_webhook import send_notification_through_discord
 import discord
-from api import DMVAPIHandler
-# from shared_data import set_nearby_dmv_offices_data
+from DMV_API_Handler import DMVAPIHandler
+from Date_Handler import DateHandler
 from discord.ext import commands
 
 
 #interactive bot
-TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.GT-tDW.-YNFJR80R6m9woXIKJRFwsd3piJh0j1ip8rFeg'
+TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.G0Y9jN.3Xoh8NisJRCr1HSImHXj5WALar22MUApA-8W0o'
 CHANNEL_ID = 1186427997851488266
 
 
 dmv_api_handler = DMVAPIHandler()
 email_handler = EmailHandler()
+date_handler = DateHandler()
 
-
-#make datetime formate
-def make_datetime_formate(str):
-    split_str = str.split("-")
-    datetime_formate = datetime(int(split_str[0]),int(split_str[1]),int(split_str[2][:2]))
-    return datetime_formate
-
-
-#find the earliest date and add weekday information
-def find_earlier_date_than_user_input(formated_input_date,formated_date_from_all_list, office_obj):
-    old_day = formated_input_date.strftime("%A")
-    if formated_date_from_all_list < formated_input_date:
-
-        new_day = formated_date_from_all_list.strftime("%A")
-
-        dmv_field_office_public_id = office_obj['meta']['dmv_field_office_public_id']
-        time_slots= dmv_api_handler.get_time_slot_data_api(dmv_field_office_public_id,formated_date_from_all_list)
-
-        print("---------------------------------------------")
-
-        available_time_slots = []
-
-        for time_slot in time_slots:
-            available_time_slots.append(time_slot)
-
-        time_slots_str = '\n'.join(available_time_slots)
-        information = f"Id: {office_obj['id']} \n Location : {office_obj['slug']},\n Date : {formated_date_from_all_list} {new_day},\n Time slots as followings: \n{time_slots_str}"
-        return information
-
-    else:
-
-        return f"Sorry, I can't find earlier one at {office_obj['id']} {office_obj['slug']}"
 
 
 #input validation
@@ -90,12 +59,13 @@ def get_input_date_zipcode():
 
 #get input: date & zipcode
 user_input_date_zipcode = get_input_date_zipcode()
+print(f"檢查 user_input_date_zipcode {user_input_date_zipcode}")
 
 #get user input and convert into datatime
 if isinstance(user_input_date_zipcode,list):
 
     #format user input date as datetime
-    formated_input_date = make_datetime_formate(user_input_date_zipcode[1])
+    formated_input_date = date_handler.make_datetime_formate(user_input_date_zipcode[1])
 
     #get all nearby dmv offices
     nearby_dmv_offices_data = dmv_api_handler.get_dmv_office_nearby_data_api(user_input_date_zipcode[2])
@@ -104,8 +74,8 @@ if isinstance(user_input_date_zipcode,list):
     #add attribute - 1. earliest_available_date in each nearby_dmv_offices_data & 2. information with find_earlier_date_than_user_input information
     for office in nearby_dmv_offices_data:
         earliest_date= dmv_api_handler.get_date_data_api(office['meta']["dmv_field_office_public_id"])
-        office["earliest_available_date"] = make_datetime_formate(earliest_date)
-        information = find_earlier_date_than_user_input(formated_input_date,office["earliest_available_date"],office)
+        office["earliest_available_date"] = date_handler.make_datetime_formate(earliest_date)
+        information = date_handler.find_earlier_date_than_user_input(formated_input_date,office["earliest_available_date"],office)
         office["information"] = information
 
 
