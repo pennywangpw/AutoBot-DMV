@@ -8,10 +8,11 @@ import discord
 from DMV_API_Handler import DMVAPIHandler
 from Date_Handler import DateHandler
 from discord.ext import commands
+import random
 
 
 #interactive bot
-
+TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.GtW8uH.fml7h1IQFwTZDTox6md0Hy34XC-HDIoHcBZTso'
 # CHANNEL_ID = 1186427997851488266
 
 
@@ -88,24 +89,102 @@ if isinstance(user_input_date_zipcode,list):
 
     #METHOD 3.send a notification through Discord bot
     # Create an instance of the bot
-    bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+    bot = commands.Bot(command_prefix="", intents=discord.Intents.all())
 
-
+    #不需要透過command name 當Event發生時可以直接執行
     # Bot says hi
     @bot.event
     async def on_ready():
         print(f"Hello Penny! Bot is ready for you...")
 
-    # Define a command for the bot
-    @bot.command(name="update", aliases=["UPDATE"])
-    async def update_command(ctx):
-        # Respond to the Discord user with the data
-        old_day = formated_input_date.strftime("%A")
-        number_of_office = len(nearby_dmv_offices_data)
-        msg_to_user = f"The date you have on hand is on {formated_input_date} {old_day}!\n I found {number_of_office} location(s) with earlier time than what you have!\n\n"
+    # #需要透過prefix啟用,並且用command name啟用
+    # @bot.command(name="add")
+    # async def add(ctx, left: int, right: int):
+    #     """Adds two numbers together."""
+    #     await ctx.send(left + right)
 
-        response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in nearby_dmv_offices_data])
-        await ctx.send(response)
+
+    ## 這方法需要找出多關鍵字
+    # #需要透過prefix啟用,並且用command name啟用
+    # # Define a command for the bot
+    # @bot.command(name="update", aliases=["UPDATE"])
+    # async def update_command(ctx):
+    #     # Respond to the Discord user with the data
+    #     old_day = formated_input_date.strftime("%A")
+    #     number_of_office = len(nearby_dmv_offices_data)
+    #     msg_to_user = f"The date you have on hand is on {formated_input_date} {old_day}!\n I found {number_of_office} location(s) with earlier time than what you have!\n\n"
+
+    #     response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in nearby_dmv_offices_data])
+    #     await ctx.send(response)
+
+
+    #再試一個
+    @bot.event
+    async def on_message(message):
+        if message.author == bot.user:
+            return
+        print(f"確認 message.content {message.content}")
+        date_keyword = ["date", "earlier"]
+        distance_keyword = ["miles"]
+
+        message_text = message.content.lower().split()
+
+        print(f"這邊是一掉所有的空白message_text {message_text}")
+        for word in message_text:
+            if word in date_keyword:
+                print(f"date_keyword {date_keyword}")
+                old_day = formated_input_date.strftime("%A")
+                number_of_office = len(nearby_dmv_offices_data)
+                msg_to_user = f"The date you have on hand is on {formated_input_date} {old_day}!\n I found {number_of_office} location(s) with earlier time than what you have!\n\n"
+
+                response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in nearby_dmv_offices_data])
+                await message.channel.send(response)
+
+            elif word in distance_keyword:
+                print(f"distance_keyword {distance_keyword}")
+                #find the distance the user is looking for
+                mile_index = message_text.index(word)
+                number_index = mile_index - 1
+                print(mile_index, type(mile_index), number_index, type(number_index))
+                input_miles = message_text[number_index]
+                old_day = formated_input_date.strftime("%A")
+                offices_within_miles = []
+                for office in nearby_dmv_offices_data:
+                    print(type(office["distance"]), type(input_miles))
+                    print(office["distance"], input_miles)
+
+                    if office["distance"] <= float(input_miles):
+                        print(f"落入input user要得距離內")
+                        offices_within_miles.append(office)
+                        number_of_office = len(offices_within_miles)
+                        msg_to_user = f"The date you have on hand is on {formated_input_date} {old_day}!\n I found {number_of_office} location(s) with earlier time than what you have!\n\n"
+
+                        response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in offices_within_miles])
+                        await message.channel.send(response)
+
+
+
+
+    #這個方法會有問題是,會跟.command相衝,他會無法判斷是個message or "add"
+    #testing
+    # @bot.event
+    # async def on_message(message):
+    #     if message.author == bot.user:
+    #         return
+    #     print(f"確認 message.content {message.content}")
+    #     # if message.content.lower().includes("update"):
+    #     if "update earlier" in message.content.lower() or "update dates" in message.content.lower():
+    #         print("say hellooooo")
+    #         # Respond to the Discord user with the data
+    #         old_day = formated_input_date.strftime("%A")
+    #         number_of_office = len(nearby_dmv_offices_data)
+    #         msg_to_user = f"The date you have on hand is on {formated_input_date} {old_day}!\n I found {number_of_office} location(s) with earlier time than what you have!\n\n"
+
+    #         response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in nearby_dmv_offices_data])
+    #         await message.channel.send(response)
+
+
+
     bot.run(TOKEN)
 
 else:
