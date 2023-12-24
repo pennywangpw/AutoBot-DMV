@@ -12,7 +12,7 @@ import random
 
 
 #interactive bot
-TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.GtW8uH.fml7h1IQFwTZDTox6md0Hy34XC-HDIoHcBZTso'
+
 # CHANNEL_ID = 1186427997851488266
 
 
