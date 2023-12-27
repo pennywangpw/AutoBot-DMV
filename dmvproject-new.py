@@ -53,7 +53,14 @@ def get_input_date_zipcode():
     else:
         return "Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087)"
 
+#format response
+def format_response(formated_input_date, nearby_dmv_offices_data):
+    old_day = formated_input_date.strftime("%A")
+    number_of_office = len(nearby_dmv_offices_data)
+    msg_to_user = f"The date you have on hand is on {formated_input_date} {old_day}!\n I found {number_of_office} location(s) with earlier time than what you have!\n\n"
 
+    response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in nearby_dmv_offices_data])
+    return response
 
 
 #GOAL: bot想要拆開
@@ -97,28 +104,6 @@ if isinstance(user_input_date_zipcode,list):
     async def on_ready():
         print(f"Hello Penny! Bot is ready for you...")
 
-    # #需要透過prefix啟用,並且用command name啟用
-    # @bot.command(name="add")
-    # async def add(ctx, left: int, right: int):
-    #     """Adds two numbers together."""
-    #     await ctx.send(left + right)
-
-
-    ## 這方法需要找出多關鍵字
-    # #需要透過prefix啟用,並且用command name啟用
-    # # Define a command for the bot
-    # @bot.command(name="update", aliases=["UPDATE"])
-    # async def update_command(ctx):
-    #     # Respond to the Discord user with the data
-    #     old_day = formated_input_date.strftime("%A")
-    #     number_of_office = len(nearby_dmv_offices_data)
-    #     msg_to_user = f"The date you have on hand is on {formated_input_date} {old_day}!\n I found {number_of_office} location(s) with earlier time than what you have!\n\n"
-
-    #     response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in nearby_dmv_offices_data])
-    #     await ctx.send(response)
-
-
-    #再試一個
     @bot.event
     async def on_message(message):
         if message.author == bot.user:
@@ -128,26 +113,19 @@ if isinstance(user_input_date_zipcode,list):
         distance_keyword = ["miles"]
 
         message_text = message.content.lower().split()
-
+        print(f"所有的office nearby_dmv_offices_data {nearby_dmv_offices_data}")
         print(f"這邊是一掉所有的空白message_text {message_text}")
-        for word in message_text:
-            if word in date_keyword:
-                print(f"date_keyword {date_keyword}")
-                old_day = formated_input_date.strftime("%A")
-                number_of_office = len(nearby_dmv_offices_data)
-                msg_to_user = f"The date you have on hand is on {formated_input_date} {old_day}!\n I found {number_of_office} location(s) with earlier time than what you have!\n\n"
+        find_or_not = False
+        for word in message_text: #['9', 'miles']
 
-                response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in nearby_dmv_offices_data])
-                await message.channel.send(response)
-
-            elif word in distance_keyword:
+            if word in distance_keyword:
                 print(f"distance_keyword {distance_keyword}")
                 #find the distance the user is looking for
+                find_or_not = True
                 mile_index = message_text.index(word)
                 number_index = mile_index - 1
                 print(mile_index, type(mile_index), number_index, type(number_index))
                 input_miles = message_text[number_index]
-                old_day = formated_input_date.strftime("%A")
                 offices_within_miles = []
                 for office in nearby_dmv_offices_data:
                     print(type(office["distance"]), type(input_miles))
@@ -156,33 +134,59 @@ if isinstance(user_input_date_zipcode,list):
                     if office["distance"] <= float(input_miles):
                         print(f"落入input user要得距離內")
                         offices_within_miles.append(office)
-                        number_of_office = len(offices_within_miles)
-                        msg_to_user = f"The date you have on hand is on {formated_input_date} {old_day}!\n I found {number_of_office} location(s) with earlier time than what you have!\n\n"
-
-                        response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in offices_within_miles])
-                        await message.channel.send(response)
+                    else:
+                        await message.channel.send(f"I can't find any office within {input_miles} miles")
+                        break
 
 
 
+                response = format_response(formated_input_date, offices_within_miles)
 
-    #這個方法會有問題是,會跟.command相衝,他會無法判斷是個message or "add"
-    #testing
-    # @bot.event
-    # async def on_message(message):
-    #     if message.author == bot.user:
-    #         return
-    #     print(f"確認 message.content {message.content}")
-    #     # if message.content.lower().includes("update"):
-    #     if "update earlier" in message.content.lower() or "update dates" in message.content.lower():
-    #         print("say hellooooo")
-    #         # Respond to the Discord user with the data
-    #         old_day = formated_input_date.strftime("%A")
-    #         number_of_office = len(nearby_dmv_offices_data)
-    #         msg_to_user = f"The date you have on hand is on {formated_input_date} {old_day}!\n I found {number_of_office} location(s) with earlier time than what you have!\n\n"
+                await message.channel.send(response)
 
-    #         response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in nearby_dmv_offices_data])
-    #         await message.channel.send(response)
 
+        if find_or_not is False:
+            for word in message_text:
+                if word in date_keyword:
+                    print(f"date_keyword {date_keyword}")
+
+                    response = format_response(formated_input_date, nearby_dmv_offices_data)
+
+                    await message.channel.send(response)
+
+
+
+
+        # for word in message_text:
+        #     if word in date_keyword:
+        #         print(f"date_keyword {date_keyword}")
+
+        #         response = format_response(formated_input_date, nearby_dmv_offices_data)
+
+        #         await message.channel.send(response)
+        #         break
+
+        #     elif word in distance_keyword:
+        #         print(f"distance_keyword {distance_keyword}")
+        #         #find the distance the user is looking for
+        #         mile_index = message_text.index(word)
+        #         number_index = mile_index - 1
+        #         print(mile_index, type(mile_index), number_index, type(number_index))
+        #         input_miles = message_text[number_index]
+        #         offices_within_miles = []
+        #         for office in nearby_dmv_offices_data:
+        #             print(type(office["distance"]), type(input_miles))
+        #             print(office["distance"], input_miles)
+
+        #             if office["distance"] <= float(input_miles):
+        #                 print(f"落入input user要得距離內")
+        #                 offices_within_miles.append(office)
+
+        #                 response = format_response(formated_input_date, offices_within_miles)
+
+        #                 await message.channel.send(response)
+
+        #         await message.channel.send(f"I can't find any office within {input_miles} miles.")
 
 
     bot.run(TOKEN)
