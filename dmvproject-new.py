@@ -9,6 +9,7 @@ from DMV_API_Handler import DMVAPIHandler
 from Date_Handler import DateHandler
 from discord.ext import commands
 import random
+import string
 
 
 #interactive bot
@@ -62,6 +63,14 @@ def format_response(formated_input_date, nearby_dmv_offices_data):
     response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in nearby_dmv_offices_data])
     return response
 
+#remove punctuation marks
+def remove_punctuation(user_input_string):
+    translator = str.maketrans('', '', string.punctuation)
+    result = user_input_string.translate(translator)
+    print(f"看一下function內的結果 {result}")
+    return result
+
+
 
 #GOAL: bot想要拆開
 
@@ -106,46 +115,49 @@ if isinstance(user_input_date_zipcode,list):
 
     @bot.event
     async def on_message(message):
+        # check if bot is not responding itself
         if message.author == bot.user:
             return
         print(f"確認 message.content {message.content}")
-        date_keyword = ["date", "earlier"]
+
+        #list of keywords
+        date_keyword = ["date", "earlier", "dates"]
         distance_keyword = ["miles"]
 
-        message_text = message.content.lower().split()
-        print(f"所有的office nearby_dmv_offices_data {nearby_dmv_offices_data}")
+        #lower and split user input sentense in a list
+        message_content_remove_punctuation= remove_punctuation(message.content)
+        print(f"想要看一下移除所有標點符號有沒有成功 {message_content_remove_punctuation}")
+        message_text = message_content_remove_punctuation.lower().split()
+
         print(f"這邊是一掉所有的空白message_text {message_text}")
         find_or_not = False
-        for word in message_text: #['9', 'miles']
 
+        #iterate through each word from user input
+        for word in message_text: #['9', 'miles']
+            #check if the word is in the keywords list, check if there's a keyword: Miles
             if word in distance_keyword:
-                print(f"distance_keyword {distance_keyword}")
-                #find the distance the user is looking for
+
                 find_or_not = True
+                #find the distance the user is looking for
                 mile_index = message_text.index(word)
                 number_index = mile_index - 1
-                print(mile_index, type(mile_index), number_index, type(number_index))
                 input_miles = message_text[number_index]
+
+                #collect offices which are within the miles request
                 offices_within_miles = []
                 for office in nearby_dmv_offices_data:
-                    print(type(office["distance"]), type(input_miles))
-                    print(office["distance"], input_miles)
-
                     if office["distance"] <= float(input_miles):
-                        print(f"落入input user要得距離內")
                         offices_within_miles.append(office)
-                    else:
-                        await message.channel.send(f"I can't find any office within {input_miles} miles")
-                        break
 
-
+                if not offices_within_miles:
+                    await message.channel.send(f"I can't find any office within {input_miles} miles")
 
                 response = format_response(formated_input_date, offices_within_miles)
-
                 await message.channel.send(response)
 
-
+        #if keyword Miles can't be found, check if there's keyword relates to Date
         if find_or_not is False:
+            #iterate through each word from user input
             for word in message_text:
                 if word in date_keyword:
                     print(f"date_keyword {date_keyword}")
