@@ -19,9 +19,11 @@ class DMVAPIHandler:
     def get_date_data_api(self,dmv_field_office_public_id):
 
         url = f"https://www.dmv.ca.gov/portal/wp-json/dmv/v1/appointment/branches/{dmv_field_office_public_id}/dates?services[]=DL!b94ae07d48f4d0cff89b6fc0e0c9aea5fa2a47d11728311b7adccdef2c728&numberOfCustomers=1&ver=977125805110.5748"
+        print(f"get date url {url}")
         response = requests.get(url)
 
         available_datas_data = response.json()
+        print(f"確認api get date有拿到 available_datas_data {available_datas_data}")
 
 
         earliest_available_date = available_datas_data[0]

@@ -18,7 +18,6 @@ class DateHandler:
 
     #find the earliest date and add weekday information
     def find_earlier_date_than_user_input(self,formated_input_date,formated_date_from_all_list, office_obj):
-        old_day = formated_input_date.strftime("%A")
         if formated_date_from_all_list < formated_input_date:
 
             new_day = formated_date_from_all_list.strftime("%A")
