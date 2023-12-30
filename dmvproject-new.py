@@ -97,13 +97,14 @@ if isinstance(user_input_date_zipcode,list):
     bot = commands.Bot(command_prefix="", intents=discord.Intents.all())
 
     #不需要透過command name 當Event發生時可以直接執行
-    # Bot says hi
+    # Bot is ready and ask first question
     @bot.event
     async def on_ready():
         print(f"Hello Penny! Bot is ready for you...")
         channel = bot.get_channel(CHANNEL_ID)
-        await channel.send("How may I help you today?")
+        await channel.send("The bot is online.\nPlease provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you")
 
+    # Bot will respond the user by keywords
     @bot.event
     async def on_message(message):
         # check if bot is not responding itself
@@ -113,49 +114,95 @@ if isinstance(user_input_date_zipcode,list):
         #list of keywords
         date_keyword = ["date", "earlier", "dates"]
         distance_keyword = ["miles"]
+        zipcode_keyword = dmv_api_handler.get_dmv_offices_zipcode_data_api()
+        print(f"check 一下拿回來的zipcode {zipcode_keyword}")
 
         #lower and split user input sentense in a list
         message_content_remove_punctuation= remove_punctuation(message.content)
         message_text = message_content_remove_punctuation.lower().split()
 
+
         print(f"這邊是一掉所有的空白message_text {message_text}")
-        find_or_not = False
 
-        #iterate through each word from user input
-        for word in message_text: #['9', 'miles']
-            #check if the word is in the keywords list, check if there's a keyword: Miles
-            if word.lower() in distance_keyword:
-                print(f"user的關鍵字在distance_keyword中 {word}")
-                find_or_not = True
-                #find the distance the user is looking for
-                mile_index = message_text.index(word)
-                number_index = mile_index - 1
-                input_miles = message_text[number_index]
+        input_validation= validation_handler.date_zipcode_input_validation_V2(message_text)
+        print(f"input_validation {input_validation}")
+        if input_validation == "pass":
+            find_or_not = False
 
-                #collect offices which are within the miles request
-                offices_within_miles = []
-                for office in nearby_dmv_offices_data:
-                    if office["distance"] <= float(input_miles):
-                        offices_within_miles.append(office)
-
-                if not offices_within_miles:
-                    await message.channel.send(f"I can't find any office within {input_miles} miles")
-                else:
-                    response = format_response(formated_input_date, offices_within_miles)
-                    await message.channel.send(response)
-
-        #if keyword Miles can't be found, check if there's keyword relates to Date
-        if find_or_not is False:
             #iterate through each word from user input
-            for word in message_text:
-                if word.lower() in date_keyword:
-                    response = format_response(formated_input_date, nearby_dmv_offices_data)
-
-                    await message.channel.send(response)
+            for word in message_text: #[2024-01-25, 95035]
+                #check if the word is in the keywords list, check if there's a keyword: Miles
+                if word.lower() in distance_keyword:
+                    print(f"user的關鍵字在distance_keyword中 {word}")
                     find_or_not = True
-                    break
+                    #find the distance the user is looking for
+                    mile_index = message_text.index(word)
+                    number_index = mile_index - 1
+                    input_miles = message_text[number_index]
+
+                    #collect offices which are within the miles request
+                    offices_within_miles = []
+                    for office in nearby_dmv_offices_data:
+                        if office["distance"] <= float(input_miles):
+                            offices_within_miles.append(office)
+
+                    if not offices_within_miles:
+                        await message.channel.send(f"I can't find any office within {input_miles} miles")
+                    else:
+                        response = format_response(formated_input_date, offices_within_miles)
+                        await message.channel.send(response)
+
+            #if keyword Miles can't be found, check if there's keyword relates to Date
             if find_or_not is False:
-                await message.channel.send("you may ask me about: find earlier date, find earlier date within specific miles")
+                #iterate through each word from user input
+                for word in message_text:
+                    if word.lower() in date_keyword:
+                        response = format_response(formated_input_date, nearby_dmv_offices_data)
+
+                        await message.channel.send(response)
+                        find_or_not = True
+                        break
+                if find_or_not is False:
+                    await message.channel.send("you may also provide a specific miles, so that I can offer you nearby office within the distance from your zipcode")
+        else:
+            await message.channel.send(input_validation)
+
+
+            # #iterate through each word from user input
+            # for word in message_text: #['9', 'miles']
+            #     #check if the word is in the keywords list, check if there's a keyword: Miles
+            #     if word.lower() in distance_keyword:
+            #         print(f"user的關鍵字在distance_keyword中 {word}")
+            #         find_or_not = True
+            #         #find the distance the user is looking for
+            #         mile_index = message_text.index(word)
+            #         number_index = mile_index - 1
+            #         input_miles = message_text[number_index]
+
+            #         #collect offices which are within the miles request
+            #         offices_within_miles = []
+            #         for office in nearby_dmv_offices_data:
+            #             if office["distance"] <= float(input_miles):
+            #                 offices_within_miles.append(office)
+
+            #         if not offices_within_miles:
+            #             await message.channel.send(f"I can't find any office within {input_miles} miles")
+            #         else:
+            #             response = format_response(formated_input_date, offices_within_miles)
+            #             await message.channel.send(response)
+
+            # #if keyword Miles can't be found, check if there's keyword relates to Date
+            # if find_or_not is False:
+            #     #iterate through each word from user input
+            #     for word in message_text:
+            #         if word.lower() in date_keyword:
+            #             response = format_response(formated_input_date, nearby_dmv_offices_data)
+
+            #             await message.channel.send(response)
+            #             find_or_not = True
+            #             break
+            #     if find_or_not is False:
+            #         await message.channel.send("you may ask me about: find earlier date, find earlier date within specific miles")
 
 
     bot.run(TOKEN)

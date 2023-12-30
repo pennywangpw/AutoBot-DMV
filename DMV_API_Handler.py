@@ -59,3 +59,13 @@ class DMVAPIHandler:
         # print(f"檢查是否在範圍內7 miles的dmv {dmv_office_nearby}")
         # return dmv_office_nearby
     #
+
+    #API - get all zipcode
+    def get_dmv_offices_zipcode_data_api(self):
+        url = "https://www.dmv.ca.gov/portal/wp-json/dmv/v1/field-offices?q="
+        response = requests.get(url)
+        data = response.json()
+        all_dmv_offices_zipcode = []
+        for office in data:
+            all_dmv_offices_zipcode.append(office["meta"]["dmv_field_office_zipcode"])
+        return all_dmv_offices_zipcode
