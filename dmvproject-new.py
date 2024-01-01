@@ -16,7 +16,6 @@ import string
 #interactive bot
 
 
-
 dmv_api_handler = DMVAPIHandler()
 email_handler = EmailHandler()
 date_handler = DateHandler()
@@ -131,39 +130,13 @@ if isinstance(user_input_date_zipcode,list):
 
             #iterate through each word from user input
             for word in message_text: #[2024-01-25, 95035]
-                #check if the word is in the keywords list, check if there's a keyword: Miles
-                if word.lower() in distance_keyword:
-                    print(f"user的關鍵字在distance_keyword中 {word}")
-                    find_or_not = True
-                    #find the distance the user is looking for
-                    mile_index = message_text.index(word)
-                    number_index = mile_index - 1
-                    input_miles = message_text[number_index]
+                #check if the word is zipcode
+                if validation_handler.check_convert_into_num(word) and validation_handler.check_length_zipcode_input_validtion(word):
+                    nearby_dmv_offices_data = dmv_api_handler.get_dmv_office_nearby_data_api(int(word))
+                    print(f"user input後拿到的office nearby_dmv_offices_data {nearby_dmv_offices_data}")
 
-                    #collect offices which are within the miles request
-                    offices_within_miles = []
-                    for office in nearby_dmv_offices_data:
-                        if office["distance"] <= float(input_miles):
-                            offices_within_miles.append(office)
 
-                    if not offices_within_miles:
-                        await message.channel.send(f"I can't find any office within {input_miles} miles")
-                    else:
-                        response = format_response(formated_input_date, offices_within_miles)
-                        await message.channel.send(response)
 
-            #if keyword Miles can't be found, check if there's keyword relates to Date
-            if find_or_not is False:
-                #iterate through each word from user input
-                for word in message_text:
-                    if word.lower() in date_keyword:
-                        response = format_response(formated_input_date, nearby_dmv_offices_data)
-
-                        await message.channel.send(response)
-                        find_or_not = True
-                        break
-                if find_or_not is False:
-                    await message.channel.send("you may also provide a specific miles, so that I can offer you nearby office within the distance from your zipcode")
         else:
             await message.channel.send(input_validation)
 
