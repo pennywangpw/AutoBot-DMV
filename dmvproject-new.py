@@ -14,6 +14,8 @@ import string
 
 
 #interactive bot
+TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.GyICkM.zzwkgQhNvPLUyWxHwYDfZoVpUE-CNTALrD1hrg'
+CHANNEL_ID = 1186427997851488266
 
 
 dmv_api_handler = DMVAPIHandler()
@@ -38,6 +40,25 @@ def get_input_date_zipcode():
 
 #format response
 def format_response(formated_input_date, nearby_dmv_offices_data):
+    print(f"檢查一下傳進來的 format_response {formated_input_date, nearby_dmv_offices_data} ")
+    #check each office in nearby_dmv_office_data if it has earlier date
+    checked_nearby_dmv_offices_data = []
+    for office in nearby_dmv_offices_data:
+        if not office["information"].startswith("Sorry"):
+            checked_nearby_dmv_offices_data.append(office)
+
+    old_day = formated_input_date.strftime("%A")
+    number_of_office = len(checked_nearby_dmv_offices_data)
+
+    msg_to_user = f"The date you have on hand is on {formated_input_date} {old_day}!\n I found {number_of_office} location(s) with earlier time than what you have!\n\n"
+
+    response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in checked_nearby_dmv_offices_data]) + "\n you may also provide specific miles (i.e. 7 miles) AND zipcode AND date, the bot will find earlier date within specific miles for you."
+    return response
+
+
+#format response within specific distance
+def format_response_within_d(formated_input_date, nearby_dmv_offices_data):
+    print(f"檢查一下傳進來的 format_response {formated_input_date, nearby_dmv_offices_data} ")
     #check each office in nearby_dmv_office_data if it has earlier date
     checked_nearby_dmv_offices_data = []
     for office in nearby_dmv_offices_data:
@@ -112,70 +133,71 @@ if isinstance(user_input_date_zipcode,list):
 
         #list of keywords
         date_keyword = ["date", "earlier", "dates"]
-        distance_keyword = ["miles"]
+        distance_keyword = ["miles", "miles"]
         zipcode_keyword = dmv_api_handler.get_dmv_offices_zipcode_data_api()
-        print(f"check 一下拿回來的zipcode {zipcode_keyword}")
+
 
         #lower and split user input sentense in a list
         message_content_remove_punctuation= remove_punctuation(message.content)
         message_text = message_content_remove_punctuation.lower().split()
 
 
-        print(f"這邊是一掉所有的空白message_text {message_text}")
 
-        input_validation= validation_handler.date_zipcode_input_validation_V2(message_text)
-        print(f"input_validation {input_validation}")
-        if input_validation == "pass":
-            find_or_not = False
+        # input_validation= validation_handler.date_zipcode_input_validation_V2(message_text)
+        # print(f"input_validation {input_validation}")
+        # if input_validation == "pass":
+        mile = None
+        zipcode = None
+        input_date = None
 
-            #iterate through each word from user input
-            for word in message_text: #[2024-01-25, 95035]
-                #check if the word is zipcode
-                if validation_handler.check_convert_into_num(word) and validation_handler.check_length_zipcode_input_validtion(word):
-                    nearby_dmv_offices_data = dmv_api_handler.get_dmv_office_nearby_data_api(int(word))
-                    print(f"user input後拿到的office nearby_dmv_offices_data {nearby_dmv_offices_data}")
+        #iterate through each word from user input to check if any word in distance_keyword
+        for i in range (len(message_text)): #[10 miles] [20240130 95035]
+            word = message_text[i]
+            if word in distance_keyword:
+                mile = message_text[i-1]
+            #check if the word is zipcode
+            elif validation_handler.check_convert_into_num(word) and validation_handler.check_length_zipcode_input_validtion(word):
+                zipcode = int(word)
+            elif validation_handler.check_datetime_formate_validation(word):
+                input_date = word
 
 
+        if mile is not None:
+            #convert date string into datetime
+            #find nearby dmv offices
+            formated_date = date_handler.make_string_to_datetime_formate(input_date)
+            nearby_dmv_offices_data = dmv_api_handler.get_dmv_office_nearby_within_miles_data_api(zipcode,int(mile))
+
+            for office in nearby_dmv_offices_data:
+                earliest_available_date= dmv_api_handler.get_date_data_api(office['meta']['dmv_field_office_public_id'])
+                office["earliest_available_date"] = date_handler.make_datetime_formate(earliest_available_date)
+                information = date_handler.find_earlier_date_than_user_input(formated_date,office["earliest_available_date"],office)
+                office["information"] = information
+
+            await message.channel.send(format_response_within_d(formated_date,nearby_dmv_offices_data))
+
+        #if the user input zipcode and date
+        elif zipcode is not None and input_date is not None:
+            formated_date = date_handler.make_string_to_datetime_formate(input_date)
+
+            nearby_dmv_offices_data = dmv_api_handler.get_dmv_office_nearby_data_api(zipcode)
+
+            #iterate nearby_dmv_offices_date to get earliest available date in each office (create earliest_available_date attribute to collect result)
+            #check earliest available date if ealier than user input date (create information attribute to collect info)
+            for office in nearby_dmv_offices_data:
+                earliest_available_date= dmv_api_handler.get_date_data_api(office['meta']['dmv_field_office_public_id'])
+                office["earliest_available_date"] = date_handler.make_datetime_formate(earliest_available_date)
+                information = date_handler.find_earlier_date_than_user_input(formated_date,office["earliest_available_date"],office)
+                office["information"] = information
+
+
+            await message.channel.send(format_response(formated_date,nearby_dmv_offices_data))
 
         else:
-            await message.channel.send(input_validation)
+            await message.channel.send("oh! NOT PASS VALIDATION. This is invalid input.\nPlease provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087)")
 
 
-            # #iterate through each word from user input
-            # for word in message_text: #['9', 'miles']
-            #     #check if the word is in the keywords list, check if there's a keyword: Miles
-            #     if word.lower() in distance_keyword:
-            #         print(f"user的關鍵字在distance_keyword中 {word}")
-            #         find_or_not = True
-            #         #find the distance the user is looking for
-            #         mile_index = message_text.index(word)
-            #         number_index = mile_index - 1
-            #         input_miles = message_text[number_index]
 
-            #         #collect offices which are within the miles request
-            #         offices_within_miles = []
-            #         for office in nearby_dmv_offices_data:
-            #             if office["distance"] <= float(input_miles):
-            #                 offices_within_miles.append(office)
-
-            #         if not offices_within_miles:
-            #             await message.channel.send(f"I can't find any office within {input_miles} miles")
-            #         else:
-            #             response = format_response(formated_input_date, offices_within_miles)
-            #             await message.channel.send(response)
-
-            # #if keyword Miles can't be found, check if there's keyword relates to Date
-            # if find_or_not is False:
-            #     #iterate through each word from user input
-            #     for word in message_text:
-            #         if word.lower() in date_keyword:
-            #             response = format_response(formated_input_date, nearby_dmv_offices_data)
-
-            #             await message.channel.send(response)
-            #             find_or_not = True
-            #             break
-            #     if find_or_not is False:
-            #         await message.channel.send("you may ask me about: find earlier date, find earlier date within specific miles")
 
 
     bot.run(TOKEN)

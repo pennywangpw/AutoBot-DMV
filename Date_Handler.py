@@ -9,6 +9,11 @@ class DateHandler:
     def __init__(self):
         pass
 
+    #make string to datetime formate
+    def make_string_to_datetime_formate(self,str):
+        date_obj = datetime.strptime(str, "%Y%m%d")
+        return date_obj
+
     #make datetime formate
     def make_datetime_formate(self,str):
         split_str = str.split("-")

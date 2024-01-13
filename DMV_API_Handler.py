@@ -19,11 +19,10 @@ class DMVAPIHandler:
     def get_date_data_api(self,dmv_field_office_public_id):
 
         url = f"https://www.dmv.ca.gov/portal/wp-json/dmv/v1/appointment/branches/{dmv_field_office_public_id}/dates?services[]=DL!b94ae07d48f4d0cff89b6fc0e0c9aea5fa2a47d11728311b7adccdef2c728&numberOfCustomers=1&ver=977125805110.5748"
-        print(f"get date url {url}")
         response = requests.get(url)
 
         available_datas_data = response.json()
-        print(f"確認api get date有拿到 available_datas_data {available_datas_data}")
+
 
 
         earliest_available_date = available_datas_data[0]
@@ -40,7 +39,6 @@ class DMVAPIHandler:
         try:
             data = response.json()
         except requests.exceptions.JSONDecodeError:
-            print("Invalid JSON response:", response.text)
             data = None
         return data
 
@@ -51,14 +49,18 @@ class DMVAPIHandler:
         data = response.json()
         return data
 
-        # dmv_office_nearby = []
-        # for office in data:
-        #     print(f"office {office}")
-        #     if office["distance"] < 7:
-        #         dmv_office_nearby.append(office)
-        # print(f"檢查是否在範圍內7 miles的dmv {dmv_office_nearby}")
-        # return dmv_office_nearby
-    #
+    #API- find nearby DMV office by zipcode by miles
+    def get_dmv_office_nearby_within_miles_data_api(self,zipcode,miles):
+        url = f"https://www.dmv.ca.gov/portal/wp-json/dmv/v1/field-offices?q={zipcode}"
+        response = requests.get(url)
+        data = response.json()
+
+        dmv_office_nearby = []
+        for office in data:
+            if office["distance"] < miles:
+                dmv_office_nearby.append(office)
+        return dmv_office_nearby
+
 
     #API - get all zipcode
     def get_dmv_offices_zipcode_data_api(self):
