@@ -14,7 +14,8 @@ import string
 
 
 #interactive bot
-
+TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.GF4fGH.-isTliZAqDEvWLYpKcE9RuiZGFte4kHFQqS87E'
+CHANNEL_ID = 1186427997851488266
 
 
 dmv_api_handler = DMVAPIHandler()
@@ -132,8 +133,8 @@ if isinstance(user_input_date_zipcode,list):
 
         #list of keywords
         date_keyword = ["date", "earlier", "dates"]
-        distance_keyword = ["miles", "miles"]
-        zipcode_keyword = dmv_api_handler.get_dmv_offices_zipcode_data_api()
+        distance_keyword = ["miles", "mile"]
+        # zipcode_keyword = dmv_api_handler.get_dmv_offices_zipcode_data_api()
 
 
         #lower and split user input sentense in a list
@@ -161,7 +162,7 @@ if isinstance(user_input_date_zipcode,list):
                 input_date = word
 
 
-        if mile is not None:
+        if mile is not None and zipcode is not None and input_date is not None:
             #convert date string into datetime
             #find nearby dmv offices
             formated_date = date_handler.make_string_to_datetime_formate(input_date)
