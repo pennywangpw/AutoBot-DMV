@@ -14,7 +14,8 @@ import string
 
 
 #interactive bot
-
+TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.GGitW7.HZ_Fu3y0GC38DoGutUfZ3k7spvjTrWLq1LVbO0'
+CHANNEL_ID = 1186427997851488266
 
 
 dmv_api_handler = DMVAPIHandler()
@@ -26,16 +27,22 @@ validation_handler= ValidationHandler()
 
 #get user input- either a reminder string or input list
 def get_input_date_zipcode():
-    if len(sys.argv) == 3:
-        input_date = sys.argv[1]
-        input_zipcode = int(sys.argv[2])
-        validatetion_result = validation_handler.date_zipcode_input_validation(input_date,input_zipcode)
-        if validatetion_result is not None:
-            return validatetion_result
-        else:
-            return sys.argv
+    print(f"輸入內容{sys.argv}")
+    if "active" in sys.argv:
+        return "bot is ready to communicate with the user...."
     else:
-        return "Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087)"
+        return "bot is not ready yet...."
+
+    # if len(sys.argv) == 3:
+    #     input_date = sys.argv[1]
+    #     input_zipcode = int(sys.argv[2])
+    #     validatetion_result = validation_handler.date_zipcode_input_validation(input_date,input_zipcode)
+    #     if validatetion_result is not None:
+    #         return validatetion_result
+    #     else:
+    #         return sys.argv
+    # else:
+    #     return "Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087)"
 
 #format response
 def format_response(formated_input_date, nearby_dmv_offices_data):
@@ -87,29 +94,30 @@ user_input_date_zipcode = get_input_date_zipcode()
 
 
 #get user input and convert into datatime
-if isinstance(user_input_date_zipcode,list):
+# if isinstance(user_input_date_zipcode,list):
+if user_input_date_zipcode:
+    #先command out之前的用法
+    # #format user input date as datetime
+    # formated_input_date = date_handler.make_datetime_formate(user_input_date_zipcode[1])
 
-    #format user input date as datetime
-    formated_input_date = date_handler.make_datetime_formate(user_input_date_zipcode[1])
-
-    #get all nearby dmv offices
-    nearby_dmv_offices_data = dmv_api_handler.get_dmv_office_nearby_data_api(user_input_date_zipcode[2])
-
-
-    #add attribute - 1. earliest_available_date in each nearby_dmv_offices_data & 2. information with find_earlier_date_than_user_input information
-    for office in nearby_dmv_offices_data:
-        earliest_date= dmv_api_handler.get_date_data_api(office['meta']["dmv_field_office_public_id"])
-        office["earliest_available_date"] = date_handler.make_datetime_formate(earliest_date)
-        information = date_handler.find_earlier_date_than_user_input(formated_input_date,office["earliest_available_date"],office)
-        office["information"] = information
+    # #get all nearby dmv offices
+    # nearby_dmv_offices_data = dmv_api_handler.get_dmv_office_nearby_data_api(user_input_date_zipcode[2])
 
 
-    #NOTIFICATION!
-    #METHOD 1.send an email with all avilable ealier time with locations information
-    email_handler.send_email(formated_input_date,nearby_dmv_offices_data)
+    # #add attribute - 1. earliest_available_date in each nearby_dmv_offices_data & 2. information with find_earlier_date_than_user_input information
+    # for office in nearby_dmv_offices_data:
+    #     earliest_date= dmv_api_handler.get_date_data_api(office['meta']["dmv_field_office_public_id"])
+    #     office["earliest_available_date"] = date_handler.make_datetime_formate(earliest_date)
+    #     information = date_handler.find_earlier_date_than_user_input(formated_input_date,office["earliest_available_date"],office)
+    #     office["information"] = information
 
-    #METHOD 2.send a notification through Discord
-    send_notification_through_discord(formated_input_date,nearby_dmv_offices_data)
+
+    # #NOTIFICATION!
+    # #METHOD 1.send an email with all avilable ealier time with locations information
+    # email_handler.send_email(formated_input_date,nearby_dmv_offices_data)
+
+    # #METHOD 2.send a notification through Discord
+    # send_notification_through_discord(formated_input_date,nearby_dmv_offices_data)
 
     #METHOD 3.send a notification through Discord bot
     # Create an instance of the bot
