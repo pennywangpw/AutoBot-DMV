@@ -16,6 +16,7 @@ import string
 #interactive bot
 
 
+
 dmv_api_handler = DMVAPIHandler()
 email_handler = EmailHandler()
 date_handler = DateHandler()
@@ -24,23 +25,15 @@ validation_handler= ValidationHandler()
 
 
 #get user input- either a reminder string or input list
-def get_input_date_zipcode():
+def active_robot():
     print(f"輸入內容{sys.argv}")
     if "active" in sys.argv:
-        return "bot is ready to communicate with the user...."
+        print("bot is ready to communicate with the user....")
+        return True
     else:
-        return "bot is not ready yet...."
+        print("bot is not ready yet....")
+        return False
 
-    # if len(sys.argv) == 3:
-    #     input_date = sys.argv[1]
-    #     input_zipcode = int(sys.argv[2])
-    #     validatetion_result = validation_handler.date_zipcode_input_validation(input_date,input_zipcode)
-    #     if validatetion_result is not None:
-    #         return validatetion_result
-    #     else:
-    #         return sys.argv
-    # else:
-    #     return "Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087)"
 
 #format response
 def format_response(formated_input_date, nearby_dmv_offices_data):
@@ -88,12 +81,12 @@ def remove_punctuation(user_input_string):
 #GOAL: 將啟動和互動的部分拆開
 
 #get input: date & zipcode
-user_input_date_zipcode = get_input_date_zipcode()
+robot_is_active = active_robot()
 
 
 #get user input and convert into datatime
 # if isinstance(user_input_date_zipcode,list):
-if user_input_date_zipcode:
+if robot_is_active:
     #先command out之前的用法
     # #format user input date as datetime
     # formated_input_date = date_handler.make_datetime_formate(user_input_date_zipcode[1])
@@ -208,4 +201,4 @@ if user_input_date_zipcode:
     bot.run(TOKEN)
 
 else:
-    print(user_input_date_zipcode)
+    print("Sorry, bot is not ready yet....")
