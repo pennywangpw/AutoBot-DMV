@@ -1,20 +1,47 @@
 from random import choice, randint
+from Validation_Handler import ValidationHandler
+
+
+validation_handler= ValidationHandler()
+
 
 def check_keyword(user_input: str) -> str:
     date_keyword = ["date", "earlier", "dates"]
     distance_keyword = ["miles", "mile"]
     print("user_input and type", user_input, type(user_input))
-    split_user_input = user_input.split()
+    if_in_keyword = False
+    split_user_input_list = user_input.split()
 
-    for word in split_user_input:
-        print("word: ",word)
-        if word in date_keyword:
-            return f"Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
+    if validation_handler.date_zipcode_input_validation_V2(split_user_input_list) == "pass":
+        if_in_keyword = True
 
-        elif word in distance_keyword:
-            return f"Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
+    else:
+        for word in split_user_input_list:
+            print("word: ",word)
+            if word in date_keyword:
+                if_in_keyword = True
+                return f"Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
 
-    return False
+            elif word in distance_keyword:
+                if_in_keyword = True
+                return f"Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
+
+            elif word == "hello":
+                if_in_keyword = True
+                return "Hello there! How can I help you ?"
+
+            elif validation_handler.check_datetime_formate_validation(word):
+                if_in_keyword = True
+                return f"your input {word} is valid date time"
+
+            elif validation_handler.check_convert_into_num(word) and validation_handler.check_length_zipcode_input_validtion(word):
+                if_in_keyword = True
+                return f"your input {word} is valid zipcode"
+
+
+
+    if not if_in_keyword:
+        return False
 
 
 def get_response(user_input: str) -> str:

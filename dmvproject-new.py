@@ -14,7 +14,7 @@ import string
 
 
 #interactive bot
-TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.GtP4KZ.2ajb-oBWXwzaJObU9R4DP5QRg_uIdGyAN2Xrv0'
+TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.G0NsV_.wLSVBZaN3j4wmzBWsBGa92mV6Ms9m1uN_3dlL8'
 CHANNEL_ID = 1186427997851488266
 
 
@@ -25,7 +25,7 @@ validation_handler= ValidationHandler()
 
 
 
-#get user input- either a reminder string or input list
+#active bot
 def active_robot():
     print(f"輸入內容{sys.argv}")
     if "active" in sys.argv:
@@ -36,7 +36,7 @@ def active_robot():
         return False
 
 
-#format response
+# response- format response
 def format_response(formated_input_date, nearby_dmv_offices_data):
     print(f"檢查一下傳進來的 format_response {formated_input_date, nearby_dmv_offices_data} ")
     #check each office in nearby_dmv_office_data if it has earlier date
@@ -54,7 +54,7 @@ def format_response(formated_input_date, nearby_dmv_offices_data):
     return response
 
 
-#format response within specific distance
+# response - format response within specific distance
 def format_response_within_d(formated_input_date, nearby_dmv_offices_data):
     print(f"檢查一下傳進來的 format_response {formated_input_date, nearby_dmv_offices_data} ")
     #check each office in nearby_dmv_office_data if it has earlier date
@@ -85,34 +85,7 @@ def remove_punctuation(user_input_string):
 robot_is_active = active_robot()
 
 
-#get user input and convert into datatime
-# if isinstance(user_input_date_zipcode,list):
 if robot_is_active:
-    #先command out之前的用法
-    # #format user input date as datetime
-    # formated_input_date = date_handler.make_datetime_formate(user_input_date_zipcode[1])
-
-    # #get all nearby dmv offices
-    # nearby_dmv_offices_data = dmv_api_handler.get_dmv_office_nearby_data_api(user_input_date_zipcode[2])
-
-
-    # #add attribute - 1. earliest_available_date in each nearby_dmv_offices_data & 2. information with find_earlier_date_than_user_input information
-    # for office in nearby_dmv_offices_data:
-    #     earliest_date= dmv_api_handler.get_date_data_api(office['meta']["dmv_field_office_public_id"])
-    #     office["earliest_available_date"] = date_handler.make_datetime_formate(earliest_date)
-    #     information = date_handler.find_earlier_date_than_user_input(formated_input_date,office["earliest_available_date"],office)
-    #     office["information"] = information
-
-
-    # #NOTIFICATION!
-    # #METHOD 1.send an email with all avilable ealier time with locations information
-    # email_handler.send_email(formated_input_date,nearby_dmv_offices_data)
-
-    # #METHOD 2.send a notification through Discord
-    # send_notification_through_discord(formated_input_date,nearby_dmv_offices_data)
-
-    #METHOD 3.send a notification through Discord bot
-    # Create an instance of the bot
     bot = commands.Bot(command_prefix="", intents=discord.Intents.all())
 
     #不需要透過command name 當Event發生時可以直接執行

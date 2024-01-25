@@ -11,16 +11,11 @@ print(TOKEN)
 
 
 # set up bot
-# intents: Intents =Intents.default()
-# intents.message_content = True
-# client: Client = Client(intents=intents)
-
-
 intents: Intents = Intents.default()
 intents.message_content = True
 client: Client = Client(intents=intents)
 
-#message functionality
+# message functionality
 async def send_message(message: Message, user_message: str) -> None:
     if not user_message:
         print("Message is empty")
@@ -54,10 +49,11 @@ async def on_message(message: Message)-> None:
     channel: str = str(message.channel)
 
     print(f"[{channel}] {username}: '{user_message}'")
+    print("這裡的message: ", message)
     await send_message(message,user_message)
 
 
-
+# run bot
 def main()->None:
     client.run(token=TOKEN)
 
