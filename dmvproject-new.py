@@ -14,8 +14,7 @@ import string
 
 
 #interactive bot
-TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.G0NsV_.wLSVBZaN3j4wmzBWsBGa92mV6Ms9m1uN_3dlL8'
-CHANNEL_ID = 1186427997851488266
+
 
 
 dmv_api_handler = DMVAPIHandler()
