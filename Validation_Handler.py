@@ -8,11 +8,13 @@ class ValidationHandler:
 
     #check if the word can be changed to number
     def check_convert_into_num(self,word):
+        res = False
         try:
             int(word)
-            return True
+            res =  True
         except:
-            return False
+            return res
+        return res
 
     #check if the length of zipcode is correct
     def check_length_zipcode_input_validtion(self,word):

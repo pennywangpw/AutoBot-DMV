@@ -14,6 +14,13 @@ def check_keyword(user_input: str) -> str:
     if_in_keyword = False
     if_date_and_zipcode = False
     split_user_input_list = user_input.split()
+
+    #if all word in split_user_input_list are numbers
+    for word in split_user_input_list:
+        validation_handler.check_convert_into_num(word)
+
+
+
     user_input_validation = validation_handler.date_zipcode_input_validation_V2(split_user_input_list)
     print("user_input_validation: ",user_input_validation)
 
