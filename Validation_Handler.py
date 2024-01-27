@@ -6,6 +6,15 @@ class ValidationHandler:
         pass
 
 
+    #check if the each word in user_input can be changed to number
+    def check_is_num(self,user_input):
+        for word in user_input:
+            try:
+                int(word)
+            except:
+                return False
+        return True
+
     #check if the word can be changed to number
     def check_convert_into_num(self,word):
         res = False
