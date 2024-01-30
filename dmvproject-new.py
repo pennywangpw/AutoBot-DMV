@@ -13,8 +13,6 @@ import random
 import string
 
 
-#interactive bot
-
 
 
 dmv_api_handler = DMVAPIHandler()

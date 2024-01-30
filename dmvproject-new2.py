@@ -13,7 +13,6 @@ import random
 import string
 
 
-#interactive bot
 
 
 
@@ -104,7 +103,8 @@ if robot_is_active:
 
 
     # #NOTIFICATION!
-    # #METHOD 1.send an email with all avilable ealier time with locations information
+    # #METHOD 1.send an email with all avilable ealier
+    # time with locations information
     # email_handler.send_email(formated_input_date,nearby_dmv_offices_data)
 
     # #METHOD 2.send a notification through Discord
