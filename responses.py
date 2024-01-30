@@ -1,12 +1,55 @@
 from random import choice, randint
 from Validation_Handler import ValidationHandler
 from DMV_API_Handler import DMVAPIHandler
-
+from Date_Handler import DateHandler
+import requests, datetime
+from datetime import datetime
 
 validation_handler= ValidationHandler()
-dmv_handler = DMVAPIHandler()
+dmv_api_handler = DMVAPIHandler()
+date_handler = DateHandler()
 
 
+#compare user input date and earliest available date in zipcode area to find the earlier date
+def find_earliest_date(formated_input_date,formated_date_from_all_list, office_obj):
+    return date_handler.find_earlier_date_than_user_input(formated_input_date,formated_date_from_all_list, office_obj)
+
+#format response
+def format_response(user_input, nearby_dmv_offices_data):
+    print(f"檢查一下傳進來的 format_response {user_input, nearby_dmv_offices_data} ")
+
+    #formated_input_date
+    for num in user_input:
+        if validation_handler.check_length_zipcode_input_validtion(num):
+            formated_input_date = num
+
+    #iterate through the data to format the res
+    for office in nearby_dmv_offices_data:
+        #find earliest date in the office
+        earliest_available_date= dmv_api_handler.get_date_data_api(office['meta']['dmv_field_office_public_id'])
+        office["earliest_available_date"] = date_handler.make_datetime_formate(earliest_available_date)
+
+        information = find_earliest_date(formated_input_date,office["earliest_available_date"],office)
+        office["information"] = information
+
+    #check each office in nearby_dmv_office_data if it has earlier date
+    checked_nearby_dmv_offices_data = []
+    for office in nearby_dmv_offices_data:
+        if not office["information"].startswith("Sorry"):
+            checked_nearby_dmv_offices_data.append(office)
+
+    old_day = formated_input_date.strftime("%A")
+    number_of_office = len(checked_nearby_dmv_offices_data)
+
+    msg_to_user = f"The date you have on hand is on {formated_input_date} {old_day}!\n I found {number_of_office} location(s) with earlier time than what you have!\n\n"
+
+    response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in checked_nearby_dmv_offices_data]) + "\n you may also provide specific miles (i.e. 7 miles) AND zipcode AND date, the bot will find earlier date within specific miles for you."
+    return response
+
+
+
+
+#response by user input
 def get_response(user_input: str) -> str:
     date_keyword = ["date", "earlier", "dates"]
     distance_keyword = ["miles", "mile"]
@@ -42,26 +85,16 @@ def get_response(user_input: str) -> str:
                 if_in_keyword = True
                 return f"Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
 
+    #if not in keyword lists OR not valid date and zipcode
     if not (if_in_keyword or if_date_and_zipcode):
-        print("最後答案false")
-        # return False
         return choice(['I do not understand...','Do you mind rephrasing that?'])
 
-    # return True
+    #if numbers are provided
     else:
         print("這裡的條件是 是數字且兩個都有")
         for num in split_user_input_list:
             if validation_handler.check_length_zipcode_input_validtion(num):
                 zipcode = int(num)
-                return dmv_handler.get_dmv_office_nearby_data_api(zipcode)
-
-
-# def get_response(user_input: str) -> str:
-#     lowered: str = user_input.lower()
-#     split_user_input_list = lowered.split()
-#     print("split_user_input_list想要發api",split_user_input_list)
-
-#     response_by_keyword_check = check_input_is_number(lowered)
-#     print("是因為這裡回應的",response_by_keyword_check)
-
-#     return response_by_keyword_check
+                nearby_dmv_offices_data =  dmv_api_handler.get_dmv_office_nearby_data_api(zipcode)
+                #format response data
+                return format_response(split_user_input_list,nearby_dmv_offices_data)

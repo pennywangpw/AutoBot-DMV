@@ -15,7 +15,6 @@ import string
 
 
 
-
 dmv_api_handler = DMVAPIHandler()
 email_handler = EmailHandler()
 date_handler = DateHandler()
