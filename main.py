@@ -7,7 +7,7 @@ from responses import get_response
 # get token
 load_dotenv()
 TOKEN: Final[str] = os.getenv('TOKEN')
-print(TOKEN)
+print("main裡面的token: ",TOKEN)
 
 
 # set up bot

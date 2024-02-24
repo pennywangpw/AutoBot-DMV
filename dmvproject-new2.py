@@ -13,6 +13,9 @@ import random
 import string
 
 
+#interactive bot
+TOKEN = 'MTE5OTgzOTQzMDg0NDg5MTE5Nw.GpnhqC.7oW0vTXrhgxXJGKnnaTPr4w3ri-sl9pJPZo2n8'
+CHANNEL_ID = 1186427997851488266
 
 
 dmv_api_handler = DMVAPIHandler()

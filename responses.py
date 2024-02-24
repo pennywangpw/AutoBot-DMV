@@ -12,16 +12,17 @@ date_handler = DateHandler()
 
 #compare user input date and earliest available date in zipcode area to find the earlier date
 def find_earliest_date(formated_input_date,formated_date_from_all_list, office_obj):
+    print("應該是這裡出問題 ",formated_input_date,formated_date_from_all_list, office_obj)
     return date_handler.find_earlier_date_than_user_input(formated_input_date,formated_date_from_all_list, office_obj)
 
 #format response
 def format_response(user_input, nearby_dmv_offices_data):
-    print(f"檢查一下傳進來的 format_response {user_input, nearby_dmv_offices_data} ")
 
     #formated_input_date
     for num in user_input:
-        if validation_handler.check_length_zipcode_input_validtion(num):
-            formated_input_date = num
+        if validation_handler.check_datetime_formate_validation(num):
+            formated_input_date = date_handler.make_string_to_datetime_formate(num)
+
 
     #iterate through the data to format the res
     for office in nearby_dmv_offices_data:
@@ -30,6 +31,7 @@ def format_response(user_input, nearby_dmv_offices_data):
         office["earliest_available_date"] = date_handler.make_datetime_formate(earliest_available_date)
 
         information = find_earliest_date(formated_input_date,office["earliest_available_date"],office)
+        print("檢查是否有印出information: ", information)
         office["information"] = information
 
     #check each office in nearby_dmv_office_data if it has earlier date
@@ -54,7 +56,6 @@ def get_response(user_input: str) -> str:
     date_keyword = ["date", "earlier", "dates"]
     distance_keyword = ["miles", "mile"]
     greeting_keyword = ["hello","hi","hey"]
-    print("user_input and type", user_input, type(user_input))
 
     #check user input includes 2 data -> 1.date 3. zipcode
     if_in_keyword = False
