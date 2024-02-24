@@ -12,7 +12,6 @@ date_handler = DateHandler()
 
 #compare user input date and earliest available date in zipcode area to find the earlier date
 def find_earliest_date(formated_input_date,formated_date_from_all_list, office_obj):
-    print("應該是這裡出問題 ",formated_input_date,formated_date_from_all_list, office_obj)
     return date_handler.find_earlier_date_than_user_input(formated_input_date,formated_date_from_all_list, office_obj)
 
 #format response
