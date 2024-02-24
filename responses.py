@@ -30,7 +30,6 @@ def format_response(user_input, nearby_dmv_offices_data):
         office["earliest_available_date"] = date_handler.make_datetime_formate(earliest_available_date)
 
         information = find_earliest_date(formated_input_date,office["earliest_available_date"],office)
-        print("檢查是否有印出information: ", information)
         office["information"] = information
 
     #check each office in nearby_dmv_office_data if it has earlier date
@@ -61,6 +60,8 @@ def get_response(user_input: str) -> str:
     if_date_and_zipcode = False
     split_user_input_list = user_input.lower().split()
     print("split_user_input_list: ",split_user_input_list)
+
+
     #if all word in split_user_input_list are numbers
     if validation_handler.check_is_num(split_user_input_list):
         user_input_validation = validation_handler.date_zipcode_input_validation_V2(split_user_input_list)
@@ -70,11 +71,10 @@ def get_response(user_input: str) -> str:
 
     #split_user_input_list includes string
     else:
-        print("確認有盡到這裡?" )
+        print("確認有到這裡?" )
         for word in split_user_input_list:
 
             if word in greeting_keyword:
-                print("是不是來到這word", word)
                 if_in_keyword = True
                 return "Hello there! How can I help you ?"
             elif word in date_keyword:
@@ -85,13 +85,13 @@ def get_response(user_input: str) -> str:
                 if_in_keyword = True
                 return f"Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
 
+    #checking if is valid user input
     #if not in keyword lists OR not valid date and zipcode
     if not (if_in_keyword or if_date_and_zipcode):
         return choice(['I do not understand...','Do you mind rephrasing that?'])
 
-    #if numbers are provided
+    #if both numbers- zipcode and dates are provided
     else:
-        print("這裡的條件是 是數字且兩個都有")
         for num in split_user_input_list:
             if validation_handler.check_length_zipcode_input_validtion(num):
                 zipcode = int(num)

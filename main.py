@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from discord import Intents, Client, Message
 from responses import get_response
+import string
 
 # get token
 load_dotenv()
@@ -15,6 +16,12 @@ intents: Intents = Intents.default()
 intents.message_content = True
 client: Client = Client(intents=intents)
 
+#remove punctuation marks
+def remove_punctuation(user_input_string):
+    translator = str.maketrans('', '', string.punctuation)
+    result = user_input_string.translate(translator)
+    return result
+
 # message functionality
 async def send_message(message: Message, user_message: str) -> None:
     if not user_message:
@@ -25,7 +32,9 @@ async def send_message(message: Message, user_message: str) -> None:
     if is_private :
         user_message = user_message[1:]
     try:
-        response: str = get_response(user_message)
+        user_message_rmv_punctuation= remove_punctuation(user_message)
+
+        response: str = get_response(user_message_rmv_punctuation)
         await message.author.send(response) if is_private else await message.channel.send(response)
     except Exception as e:
         print("有錯誤")
