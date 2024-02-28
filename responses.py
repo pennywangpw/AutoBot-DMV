@@ -62,28 +62,58 @@ def get_response(user_input: str) -> str:
     print("split_user_input_list: ",split_user_input_list)
 
 
+    input_zipcode = None
+    input_datetime = None
+    mile_range = None
+
     #if all word in split_user_input_list are numbers
     if validation_handler.check_is_num(split_user_input_list):
-        user_input_validation = validation_handler.date_zipcode_input_validation_V2(split_user_input_list)
-        if user_input_validation == "pass":
-            print("validation pass")
+        # user_input_validation = validation_handler.date_zipcode_input_validation_V2(split_user_input_list)
+        # if user_input_validation == "pass":
+        #     print("validation pass")
+        #     if_date_and_zipcode = True
+        for word in split_user_input_list:
+            if validation_handler.check_length_zipcode_input_validtion(word):
+                input_zipcode = word
+            elif validation_handler.check_datetime_formate_validation(word):
+                input_datetime = word
+
+        if input_zipcode != None and input_datetime != None:
             if_date_and_zipcode = True
 
     #split_user_input_list includes string
     else:
         print("確認有到這裡?" )
+        #find the miles information
         for word in split_user_input_list:
+            #check if word is about miles
+            mile_range = validation_handler.find_mile_range(word)
+            print("拿到什麼mile_range: ", mile_range)
+            break
 
-            if word in greeting_keyword:
-                if_in_keyword = True
-                return "Hello there! How can I help you ?"
-            elif word in date_keyword:
-                if_in_keyword = True
-                return f"Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
+        #find zipcode and datetime information
+        for word in split_user_input_list:
+            if validation_handler.check_length_zipcode_input_validtion(word):
+                input_zipcode = word
+            elif validation_handler.check_datetime_formate_validation(word):
+                input_datetime = word
 
-            elif word in distance_keyword:
-                if_in_keyword = True
-                return f"Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
+
+        if mile_range:
+            dmv_office_within_miles_data = dmv_api_handler.get_dmv_office_nearby_within_miles_data_api(input_zipcode, int(mile_range))
+            return format_response(split_user_input_list,dmv_office_within_miles_data)
+        elif word in greeting_keyword:
+            if_in_keyword = True
+            return "Hello there! How can I help you ?"
+        elif word in date_keyword:
+            if_in_keyword = True
+            return f"Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
+
+        elif word in distance_keyword:
+            if_in_keyword = True
+            return f"Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
+
+
 
     #checking if is valid user input
     #if not in keyword lists OR not valid date and zipcode
