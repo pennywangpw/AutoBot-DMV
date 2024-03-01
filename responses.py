@@ -44,6 +44,7 @@ def format_response(user_input, nearby_dmv_offices_data):
     msg_to_user = f"The date you have on hand is on {formated_input_date} {old_day}!\n I found {number_of_office} location(s) with earlier time than what you have!\n\n"
 
     response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in checked_nearby_dmv_offices_data]) + "\n you may also provide specific miles (i.e. 7 miles) AND zipcode AND date, the bot will find earlier date within specific miles for you."
+    print("我的response: ",response)
     return response
 
 
@@ -67,39 +68,26 @@ def get_response(user_input: str) -> str:
     mile_range = None
 
     #if all word in split_user_input_list are numbers
-    if validation_handler.check_is_num(split_user_input_list):
-        # user_input_validation = validation_handler.date_zipcode_input_validation_V2(split_user_input_list)
-        # if user_input_validation == "pass":
-        #     print("validation pass")
-        #     if_date_and_zipcode = True
-        for word in split_user_input_list:
-            if validation_handler.check_length_zipcode_input_validtion(word):
-                input_zipcode = word
-            elif validation_handler.check_datetime_formate_validation(word):
-                input_datetime = word
-
-        if input_zipcode != None and input_datetime != None:
-            if_date_and_zipcode = True
+    if validation_handler.check_is_num(split_user_input_list) and validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list) != None:
+        if_date_and_zipcode = True
 
     #split_user_input_list includes string
     else:
-        print("確認有到這裡?" )
+
         #find the miles information
         for word in split_user_input_list:
             #check if word is about miles
             mile_range = validation_handler.find_mile_range(word)
-            print("拿到什麼mile_range: ", mile_range)
             break
 
-        #find zipcode and datetime information
-        for word in split_user_input_list:
-            if validation_handler.check_length_zipcode_input_validtion(word):
-                input_zipcode = word
-            elif validation_handler.check_datetime_formate_validation(word):
-                input_datetime = word
+        #check if date and zipcode are provided
+        if validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)!= None:
+            input_zipcode = validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)[0]
+            input_datetime = validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)[1]
+            if_date_and_zipcode = True
 
 
-        if mile_range:
+        if mile_range and if_date_and_zipcode:
             dmv_office_within_miles_data = dmv_api_handler.get_dmv_office_nearby_within_miles_data_api(input_zipcode, int(mile_range))
             return format_response(split_user_input_list,dmv_office_within_miles_data)
         elif word in greeting_keyword:
@@ -128,3 +116,65 @@ def get_response(user_input: str) -> str:
                 nearby_dmv_offices_data =  dmv_api_handler.get_dmv_office_nearby_data_api(zipcode)
                 #format response data
                 return format_response(split_user_input_list,nearby_dmv_offices_data)
+
+    # #if all word in split_user_input_list are numbers
+    # if validation_handler.check_is_num(split_user_input_list):
+    #     for word in split_user_input_list:
+    #         if validation_handler.check_length_zipcode_input_validtion(word):
+    #             input_zipcode = word
+    #         elif validation_handler.check_datetime_formate_validation(word):
+    #             input_datetime = word
+
+    #     if input_zipcode != None and input_datetime != None:
+    #         if_date_and_zipcode = True
+
+    # #split_user_input_list includes string
+    # else:
+    #     print("確認有到這裡?" )
+    #     #find the miles information
+    #     for word in split_user_input_list:
+    #         #check if word is about miles
+    #         mile_range = validation_handler.find_mile_range(word)
+    #         print("拿到什麼mile_range: ", mile_range)
+    #         break
+
+    #     #find zipcode and datetime information
+    #     for word in split_user_input_list:
+    #         if validation_handler.check_length_zipcode_input_validtion(word):
+    #             input_zipcode = word
+    #         elif validation_handler.check_datetime_formate_validation(word):
+    #             input_datetime = word
+
+    #     if input_zipcode != None and input_datetime != None:
+    #         if_date_and_zipcode = True
+
+
+    #     if mile_range and if_date_and_zipcode:
+    #         dmv_office_within_miles_data = dmv_api_handler.get_dmv_office_nearby_within_miles_data_api(input_zipcode, int(mile_range))
+    #         return format_response(split_user_input_list,dmv_office_within_miles_data)
+    #     elif word in greeting_keyword:
+    #         if_in_keyword = True
+    #         return "Hello there! How can I help you ?"
+    #     elif word in date_keyword:
+    #         if_in_keyword = True
+    #         return f"Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
+
+    #     elif word in distance_keyword:
+    #         if_in_keyword = True
+    #         return f"Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
+
+
+
+    # #checking if is valid user input
+    # #if not in keyword lists OR not valid date and zipcode
+    # if not (if_in_keyword or if_date_and_zipcode):
+    #     return choice(['I do not understand...','Do you mind rephrasing that?'])
+
+    # #if both numbers- zipcode and dates are provided
+    # else:
+    #     for num in split_user_input_list:
+    #         if validation_handler.check_length_zipcode_input_validtion(num):
+    #             zipcode = int(num)
+    #             nearby_dmv_offices_data =  dmv_api_handler.get_dmv_office_nearby_data_api(zipcode)
+    #             #format response data
+    #             return format_response(split_user_input_list,nearby_dmv_offices_data)

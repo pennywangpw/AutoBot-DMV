@@ -72,9 +72,27 @@ class ValidationHandler:
 
         return "NOT PASS VALIDATION. This is invalid input.\nPlease provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087)"
 
+    def check_zipcode_datetime_provided_and_valid(self,user_input):
+        input_zipcode= None
+        input_datetime= None
+        for word in user_input:
+            if self.check_length_zipcode_input_validtion(word):
+                input_zipcode = word
+            elif self.check_datetime_formate_validation(word):
+                input_datetime = word
+
+        if input_zipcode != None and input_datetime != None:
+            return input_zipcode,input_datetime
+
+
+
+
     def find_mile_range(self,word):
-        if not self.check_convert_into_num(word) and "mile" in word:
-            mile_range = word[0:word.find("mile")]
-            print("測試一下如果是7miles 可不可以得到7: ", mile_range, type(mile_range))
+        #check if mile in word
+        if "mile" in word:
+            if not self.check_convert_into_num(word):
+                mile_range = word[0:word.find("mile")]
+            else:
+                mile_range = word[word.find("mile")-1]
             return mile_range
         return False
