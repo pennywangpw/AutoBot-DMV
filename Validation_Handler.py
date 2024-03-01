@@ -87,12 +87,19 @@ class ValidationHandler:
 
 
 
-    def find_mile_range(self,word):
-        #check if mile in word
-        if "mile" in word:
-            if not self.check_convert_into_num(word):
+    def find_mile_range(self,user_input):
+        mile_range = False
+        for word in user_input:
+            print("word: ",word)
+            #check if mile in word
+            if "mile" in word and not word.startswith("m"):
                 mile_range = word[0:word.find("mile")]
-            else:
-                mile_range = word[word.find("mile")-1]
-            return mile_range
-        return False
+                break
+
+            elif "mile" in word and word.startswith("m"):
+                print("word word.find()): ",word, word.find("mile"))
+                mile_range = user_input[user_input.index(word)-1]
+                break
+
+
+        return mile_range
