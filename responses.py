@@ -43,7 +43,9 @@ def format_response(user_input, nearby_dmv_offices_data):
 
     msg_to_user = f"The date you have on hand is on {formated_input_date} {old_day}!\n I found {number_of_office} location(s) with earlier time than what you have!\n\n"
 
-    response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in checked_nearby_dmv_offices_data]) + "\n you may also provide specific miles (i.e. 7 miles) AND zipcode AND date, the bot will find earlier date within specific miles for you."
+    # response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in checked_nearby_dmv_offices_data]) + "\n you may also provide specific miles (i.e. 7 miles) AND zipcode AND date, the bot will find earlier date within specific miles for you."
+    response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in checked_nearby_dmv_offices_data]) + "\n you may also provide specific miles (i.e. 7 miles) the bot will find earlier date within specific miles for you."
+
     print("我的response: ",response)
     return response
 
@@ -61,7 +63,7 @@ def get_response(user_input: str):
     if_in_keyword = False
     if_date_and_zipcode = False
     split_user_input_list = user_input.lower().split()
-    print("split_user_input_list: ",split_user_input_list)
+    print("get response function 裡面 將user input轉乘小寫後: ", split_user_input_list)
 
 
     input_zipcode = None
@@ -79,7 +81,6 @@ def get_response(user_input: str):
 
         #find the miles information
         mile_range = validation_handler.find_mile_range(split_user_input_list)
-        print("娶回來的mile_range", mile_range)
 
         #check if date and zipcode are provided
         if validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)!= None:

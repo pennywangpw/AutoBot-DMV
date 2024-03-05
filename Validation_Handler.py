@@ -90,7 +90,7 @@ class ValidationHandler:
     def find_mile_range(self,user_input):
         mile_range = False
         for word in user_input:
-            print("word: ",word)
+            print("user intput word: ",word)
             #check if mile in word
             if "mile" in word and not word.startswith("m"):
                 mile_range = word[0:word.find("mile")]
