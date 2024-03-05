@@ -51,7 +51,8 @@ def format_response(user_input, nearby_dmv_offices_data):
 
 
 #response by user input
-def get_response(user_input: str) -> str:
+def get_response(user_input: str):
+    res = {"response":None, "record":None}
     date_keyword = ["date", "earlier", "dates"]
     distance_keyword = ["miles", "mile"]
     greeting_keyword = ["hello","hi","hey"]
@@ -70,6 +71,8 @@ def get_response(user_input: str) -> str:
     #if all word in split_user_input_list are numbers
     if validation_handler.check_is_num(split_user_input_list) and validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list) != None:
         if_date_and_zipcode = True
+        input_zipcode = validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)[0]
+        input_datetime = validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)[1]
 
     #split_user_input_list includes string
     else:
@@ -87,17 +90,25 @@ def get_response(user_input: str) -> str:
         for word in split_user_input_list:
             if mile_range and if_date_and_zipcode:
                 dmv_office_within_miles_data = dmv_api_handler.get_dmv_office_nearby_within_miles_data_api(input_zipcode, int(mile_range))
-                return format_response(split_user_input_list,dmv_office_within_miles_data)
+                # return format_response(split_user_input_list,dmv_office_within_miles_data)
+                res["response"] = format_response(split_user_input_list,dmv_office_within_miles_data)
+                res["record"] = {"zipcode": input_zipcode,"datetime": input_datetime,"mile_range": mile_range}
+                return res
             elif word in greeting_keyword:
                 if_in_keyword = True
-                return "Hello there! How can I help you ?"
+                # return "Hello there! How can I help you ?"
+                res["response"]= "Hello there! How can I help you ?"
+                return res
             elif word in date_keyword:
                 if_in_keyword = True
-                return f"Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
-
+                # return f"Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
+                res["response"]= "Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
+                return res
             elif word in distance_keyword:
                 if_in_keyword = True
-                return f"Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
+                # return f"Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
+                res["response"]= "Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
+                return res
 
 
 
@@ -112,5 +123,8 @@ def get_response(user_input: str) -> str:
             if validation_handler.check_length_zipcode_input_validtion(num):
                 zipcode = int(num)
                 nearby_dmv_offices_data =  dmv_api_handler.get_dmv_office_nearby_data_api(zipcode)
-                #format response data
-                return format_response(split_user_input_list,nearby_dmv_offices_data)
+                #format response data AND related record
+                # return format_response(split_user_input_list,nearby_dmv_offices_data)
+                res["response"] = format_response(split_user_input_list,nearby_dmv_offices_data)
+                res["record"] = {"zipcode": input_zipcode,"datetime": input_datetime,"mile_range": mile_range}
+                return res

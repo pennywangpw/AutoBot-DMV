@@ -16,6 +16,10 @@ intents: Intents = Intents.default()
 intents.message_content = True
 client: Client = Client(intents=intents)
 
+#remember user input
+previous_user_input = ""
+print("準備前的",previous_user_input)
+
 #remove punctuation marks
 def remove_punctuation(user_input_string):
     translator = str.maketrans('', '', string.punctuation)
@@ -24,6 +28,7 @@ def remove_punctuation(user_input_string):
 
 # message functionality
 async def send_message(message: Message, user_message: str) -> None:
+    global previous_user_input
     if not user_message:
         print("Message is empty")
         return
@@ -34,8 +39,23 @@ async def send_message(message: Message, user_message: str) -> None:
     try:
         user_message_rmv_punctuation= remove_punctuation(user_message)
 
-        response: str = get_response(user_message_rmv_punctuation)
-        await message.author.send(response) if is_private else await message.channel.send(response)
+        # response: str = get_response(user_message_rmv_punctuation)
+        response: object = get_response(user_message_rmv_punctuation)
+
+        print("準備紀錄zipcode and date",response)
+        # await message.author.send(response) if is_private else await message.channel.send(response)
+        await message.author.send(response["response"]) if is_private else await message.channel.send(response["response"])
+
+        #check if there's previous user input
+        if response["record"]["zipcode"]:
+            previous_user_input = previous_user_input + " " +  response["record"]["zipcode"]
+        if response["record"]["datetime"]:
+            previous_user_input = previous_user_input + " " + response["record"]["datetime"]
+        if response["record"]["mile_range"]:
+            previous_user_input = previous_user_input + " " + response["record"]["mile_range"]
+
+        print("準備後的",previous_user_input)
+
     except Exception as e:
         print("有錯誤")
         print(e)
@@ -47,19 +67,14 @@ async def schedule_daily_message():
         #wait for some time
         now = datetime.datetime.now()
         then = now + datetime.timedelta(minutes= 1)
-
-        # then = now.replace(hour=17, minute=53)
         wait_time = (then-now).total_seconds()
         print("看看now ",now)
         print("看看then ",then)
 
-
-        print("看看wait time是多少 ",wait_time)
         await asyncio.sleep(wait_time)
 
         #send message
         channel = client.get_channel(1186427997851488266)
-        print("是不是沒有channel: ",channel)
         await channel.send("test by specific time")
 
 # handle incoming messages
