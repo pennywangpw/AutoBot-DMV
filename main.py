@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from discord import Intents, Client, Message
 from responses import get_response
-import string
+import string, datetime, asyncio
 
 # get token
 load_dotenv()
@@ -41,11 +41,32 @@ async def send_message(message: Message, user_message: str) -> None:
         print(e)
 
 
+
+async def schedule_daily_message():
+    while True:
+        #wait for some time
+        now = datetime.datetime.now()
+        then = now + datetime.timedelta(minutes= 1)
+
+        # then = now.replace(hour=17, minute=53)
+        wait_time = (then-now).total_seconds()
+        print("看看now ",now)
+        print("看看then ",then)
+
+
+        print("看看wait time是多少 ",wait_time)
+        await asyncio.sleep(wait_time)
+
+        #send message
+        channel = client.get_channel(1186427997851488266)
+        print("是不是沒有channel: ",channel)
+        await channel.send("test by specific time")
+
 # handle incoming messages
 @client.event
 async def on_ready():
     print(f"{client.user} is now running!")
-
+    await schedule_daily_message()
 
 @client.event
 async def on_message(message: Message)-> None:
@@ -60,6 +81,7 @@ async def on_message(message: Message)-> None:
     print(f"[{channel}] {username}: '{user_message}'")
     print("這裡的message: ", message)
     await send_message(message,user_message)
+
 
 
 # run bot

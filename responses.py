@@ -76,7 +76,7 @@ def get_response(user_input: str) -> str:
 
         #find the miles information
         mile_range = validation_handler.find_mile_range(split_user_input_list)
-
+        print("娶回來的mile_range", mile_range)
 
         #check if date and zipcode are provided
         if validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)!= None:
