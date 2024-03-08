@@ -9,6 +9,8 @@ validation_handler= ValidationHandler()
 dmv_api_handler = DMVAPIHandler()
 date_handler = DateHandler()
 
+res = {"response":None, "record":None}
+
 
 #compare user input date and earliest available date in zipcode area to find the earlier date
 def find_earliest_date(formated_input_date,formated_date_from_all_list, office_obj):
@@ -116,7 +118,9 @@ def get_response(user_input: str):
     #checking if is valid user input
     #if not in keyword lists OR not valid date and zipcode
     if not (if_in_keyword or if_date_and_zipcode):
-        return choice(['I do not understand...','Do you mind rephrasing that?'])
+        res["response"]=choice(['I do not understand...','Do you mind rephrasing that?'])
+        return res
+        # return choice(['I do not understand...','Do you mind rephrasing that?'])
 
     #if both numbers- zipcode and dates are provided
     else:

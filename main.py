@@ -26,103 +26,142 @@ def remove_punctuation(user_input_string):
     result = user_input_string.translate(translator)
     return result
 
-#message functionality
-async def send_message(message: Message, user_message: str) -> None:
+#combine user input and record
+def combine_userinput_record(user_message):
     global response
+    #pull out previous record
+    previous_user_input = response["record"].values()
+    print("pull out previous record: ", previous_user_input)
+
+    previous_user_input_str = ""
+
+    for val in previous_user_input:
+        if val != None:
+            previous_user_input_str = previous_user_input_str + " " +  val
+
+    #add current user input
+    previous_user_input_str = previous_user_input_str + " " +  user_message
+
+    print("整理好的previous_user_input_str: ",previous_user_input_str)
+    return previous_user_input_str
+
+
+#message functionality
+async def send_message(message: Message, user_message) -> None:
+    print("傳進send_message 的 message & user_message: ",message, user_message)
+    print("傳進send_message 的user_message 可能會是那些: ", user_message)
+    global response
+    user_message_to_str = None
+    is_private = False
     if not user_message:
         print("Message is empty")
         return
 
     #private response
-    is_private = user_message[0] == "?"
-    if is_private :
-        user_message = user_message[1:]
+    if type(user_message) is str:
+        print("傳進來是string")
+        is_private = user_message[0] == "?"
+        if is_private :
+            user_message = user_message[1:]
 
-    #check if there's no response record
-    print("檢查是否有record---",response["record"])
-    if response["record"] is None:
-        print("進到這裡代表之前迷u有紀錄")
+    # #if passed in user_message is a dictionary and convert into string
+    # if type(user_message) is dict:
+    #     print("傳進來是dictionary")
+    #     user_message_to_str = user_message["record"].values()
 
-        try:
+    try:
+        if user_message_to_str:
+            user_message_rmv_punctuation= remove_punctuation(user_message_to_str)
+        else:
             user_message_rmv_punctuation= remove_punctuation(user_message)
-
-            # response: object = get_response(user_message_rmv_punctuation)
-            response = get_response(user_message_rmv_punctuation)
-
-
-            print("準備紀錄zipcode and date",response)
-            # await message.author.send(response) if is_private else await message.channel.send(response)
-            await message.author.send(response["response"]) if is_private else await message.channel.send(response["response"])
-
-        except Exception as e:
-            print("有錯誤-沒有之前的紀錄")
-            print(e)
-
-    #check if there's response record
-    elif response["record"] is not None:
-        print("之前有紀錄的")
-
-        try:
-            #pull out previous record
-            previous_user_input = response["record"].values()
-            previous_user_input_str = ""
-            for val in previous_user_input:
-                if val != None:
-                    previous_user_input_str = previous_user_input_str + " " +  val
-
-            #add current user input
-            previous_user_input_str = previous_user_input_str + " " +  user_message
+        print("拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
+        # response: object = get_response(user_message_rmv_punctuation)
+        response = get_response(user_message_rmv_punctuation)
 
 
-            if previous_user_input_str != "":
-                response = get_response(previous_user_input_str)
+        print("準備紀錄zipcode and date",response)
+        channel = client.get_channel(1186427997851488266)
+        # await message.author.send(response) if is_private else await message.channel.send(response)
+        # await message.author.send(response["response"]) if is_private else await message.channel.send(response["response"])
+        await message.author.send(response["response"]) if is_private else await channel.send(response["response"])
 
-            await message.author.send(response["response"]) if is_private else await message.channel.send(response["response"])
 
+    except Exception as e:
+        print("有錯誤")
+        print(e)
 
-            print("準備後的",previous_user_input)
-            print("準備後的previous_user_input_str",previous_user_input_str)
-
-        except Exception as e:
-            print("有錯誤-有之前的紀錄")
-            print(e)
-
-    print("====send message後的 response: ",response)
 
 async def schedule_daily_message():
     while True:
         #wait for some time
         now = datetime.datetime.now()
-        then = now + datetime.timedelta(minutes= 10)
+        then = now + datetime.timedelta(minutes= 1)
         wait_time = (then-now).total_seconds()
         print("看看now ",now)
         print("看看then ",then)
 
         await asyncio.sleep(wait_time)
 
+        #check if there's previous record
         #send message
         channel = client.get_channel(1186427997851488266)
         await channel.send("test by specific time")
+
+        #no previous record
+        if response["record"] is None:
+            print("***clock自動 並確認沒有之前紀錄")
+            await send_message(response,"there's no previous record before..")
+
+        #there's previous record
+        elif response["record"] is not None:
+            print("***clock自動 並確認 有之前紀錄")
+            input_record_str = ""
+            for input_record in response["record"].values():
+                input_record_str = input_record_str + "," + input_record
+            await send_message(response,input_record_str)
+
 
 # handle incoming messages
 @client.event
 async def on_ready():
     print(f"{client.user} is now running!")
+    print("*****一開啟")
     await schedule_daily_message()
 
 @client.event
 async def on_message(message: Message)-> None:
+    print("*****當user有輸入任何文字時")
+    print("on_message on fire時候的response: ", response)
     # check if bot is not responding itself
     if message.author == client.user:
+        print("傳送message的是client自己")
+        print("--------------END---------------")
         return
 
     username: str = str(message.author)
     user_message: str = message.content
     channel: str = str(message.channel)
 
+    print("傳送message 不是client自己")
+
     print(f"[{channel}] {username}: '{user_message}'")
     print("這裡的message: ", message)
-    await send_message(message,user_message)
+
+    #check if there's no record in response
+    if response["record"] is None:
+        print("*****當user有輸入任何文字時---檢查 沒有previous record")
+        await send_message(message,user_message)
+
+    #check if there's record in response
+    elif response["record"] is not None:
+        print("*****當user有輸入任何文字時---檢查 有previous record")
+
+
+        new_user_message = await combine_userinput_record(user_message)
+        await send_message(message,new_user_message)
+
+
+
 
 
 
