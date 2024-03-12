@@ -60,6 +60,7 @@ def get_response(user_input: str):
     date_keyword = ["date", "earlier", "dates"]
     distance_keyword = ["miles", "mile"]
     greeting_keyword = ["hello","hi","hey"]
+    no_record_keyword = "theres no previous record"
 
     #check user input includes 2 data -> 1.date 3. zipcode
     if_in_keyword = False
@@ -89,6 +90,12 @@ def get_response(user_input: str):
             input_zipcode = validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)[0]
             input_datetime = validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)[1]
             if_date_and_zipcode = True
+        #check if there's no record
+        if split_user_input_list == no_record_keyword:
+            print("相等沒有任何record紀錄 不知道要怎麼幫忙")
+            if_in_keyword = True
+            res["response"]= "Hello there! How can I help you ?"
+            return res
 
         for word in split_user_input_list:
             if mile_range and if_date_and_zipcode:
@@ -118,7 +125,7 @@ def get_response(user_input: str):
     #checking if is valid user input
     #if not in keyword lists OR not valid date and zipcode
     if not (if_in_keyword or if_date_and_zipcode):
-        res["response"]=choice(['I do not understand...','Do you mind rephrasing that?'])
+        res["response"]=choice(['I do not understand... How can I help you?','Do you mind rephrasing that? How can I help you?'])
         return res
         # return choice(['I do not understand...','Do you mind rephrasing that?'])
 

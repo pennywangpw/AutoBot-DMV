@@ -48,34 +48,35 @@ def combine_userinput_record(user_message):
 
 #message functionality
 async def send_message(message: Message, user_message) -> None:
-    print("傳進send_message 的 message & user_message: ",message, user_message)
-    print("傳進send_message 的user_message 可能會是那些: ", user_message)
+    print("*****send_message---user_message 應該都要是string: ", message, user_message)
+
     global response
-    user_message_to_str = None
+    # user_message_to_str = None
     is_private = False
     if not user_message:
         print("Message is empty")
         return
 
     #private response
-    if type(user_message) is str:
-        print("傳進來是string")
-        is_private = user_message[0] == "?"
-        if is_private :
-            user_message = user_message[1:]
-
-    # #if passed in user_message is a dictionary and convert into string
-    # if type(user_message) is dict:
-    #     print("傳進來是dictionary")
-    #     user_message_to_str = user_message["record"].values()
+    is_private = user_message[0] == "?"
+    if is_private :
+        user_message = user_message[1:]
 
     try:
-        if user_message_to_str:
-            user_message_rmv_punctuation= remove_punctuation(user_message_to_str)
-        else:
-            user_message_rmv_punctuation= remove_punctuation(user_message)
+        # if user_message_to_str:
+        #     user_message_rmv_punctuation= remove_punctuation(user_message_to_str)
+        # else:
+        #     user_message_rmv_punctuation= remove_punctuation(user_message)
+        user_message_rmv_punctuation= remove_punctuation(user_message)
         print("拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
-        # response: object = get_response(user_message_rmv_punctuation)
+
+        # #if the message is still hello and user_message is "there's no previous record" (which means user didn't input anything)
+        # if message['response'] == "Hello there! How can I help you ?" and user_message_rmv_punctuation == "theres no previous record":
+        #     #送進get_response的是 hello
+        #     response = get_response(message['response'])
+        # else:
+        #     #送進get_response的是 user input並且移除標點符號的字串
+        #     response = get_response(user_message_rmv_punctuation)
         response = get_response(user_message_rmv_punctuation)
 
 
@@ -86,12 +87,14 @@ async def send_message(message: Message, user_message) -> None:
         await message.author.send(response["response"]) if is_private else await channel.send(response["response"])
 
 
+
     except Exception as e:
         print("有錯誤")
         print(e)
 
 
 async def schedule_daily_message():
+    print("一開始run schedule_daily_message時的response: ", response)
     while True:
         #wait for some time
         now = datetime.datetime.now()
@@ -110,15 +113,17 @@ async def schedule_daily_message():
         #no previous record
         if response["record"] is None:
             print("***clock自動 並確認沒有之前紀錄")
-            await send_message(response,"there's no previous record before..")
+            await send_message(response,"there's no previous record")
 
         #there's previous record
         elif response["record"] is not None:
-            print("***clock自動 並確認 有之前紀錄")
+            print("***clock自動 並確認 有之前紀錄: ",response["record"])
             input_record_str = ""
             for input_record in response["record"].values():
-                input_record_str = input_record_str + "," + input_record
-            await send_message(response,input_record_str)
+                #only collect data which is not none
+                if input_record != None:
+                    input_record_str = input_record_str + " " + input_record
+            await send_message(None,input_record_str)
 
 
 # handle incoming messages
@@ -157,7 +162,8 @@ async def on_message(message: Message)-> None:
         print("*****當user有輸入任何文字時---檢查 有previous record")
 
 
-        new_user_message = await combine_userinput_record(user_message)
+        # new_user_message = await combine_userinput_record(user_message)
+        new_user_message = combine_userinput_record(user_message)
         await send_message(message,new_user_message)
 
 
