@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from discord import Intents, Client, Message
 from responses import get_response
 import string, datetime, asyncio
+from String_Handler import StringHandler
 
 # get token
 load_dotenv()
@@ -20,38 +21,18 @@ client: Client = Client(intents=intents)
 response = {"response":None, "record":None}
 print("一起動時的response: ", response)
 
-#remove punctuation marks
-def remove_punctuation(user_input_string):
-    translator = str.maketrans('', '', string.punctuation)
-    result = user_input_string.translate(translator)
-    return result
 
-#combine user input and record
-def combine_userinput_record(user_message):
-    global response
-    #pull out previous record
-    previous_user_input = response["record"].values()
-    print("pull out previous record: ", previous_user_input)
-
-    previous_user_input_str = ""
-
-    for val in previous_user_input:
-        if val != None:
-            previous_user_input_str = previous_user_input_str + " " +  val
-
-    #add current user input
-    previous_user_input_str = previous_user_input_str + " " +  user_message
-
-    print("整理好的previous_user_input_str: ",previous_user_input_str)
-    return previous_user_input_str
+# create string_handler instance
+string_handler = StringHandler()
 
 
-#message functionality
+
+
+#message functionality- get the response and send to channel
 async def send_message(message: Message, user_message) -> None:
     print("*****send_message---user_message 應該都要是string: ", message, user_message)
 
     global response
-    # user_message_to_str = None
     is_private = False
     if not user_message:
         print("Message is empty")
@@ -63,20 +44,9 @@ async def send_message(message: Message, user_message) -> None:
         user_message = user_message[1:]
 
     try:
-        # if user_message_to_str:
-        #     user_message_rmv_punctuation= remove_punctuation(user_message_to_str)
-        # else:
-        #     user_message_rmv_punctuation= remove_punctuation(user_message)
-        user_message_rmv_punctuation= remove_punctuation(user_message)
+        user_message_rmv_punctuation= string_handler.remove_punctuation(user_message)
         print("拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
 
-        # #if the message is still hello and user_message is "there's no previous record" (which means user didn't input anything)
-        # if message['response'] == "Hello there! How can I help you ?" and user_message_rmv_punctuation == "theres no previous record":
-        #     #送進get_response的是 hello
-        #     response = get_response(message['response'])
-        # else:
-        #     #送進get_response的是 user input並且移除標點符號的字串
-        #     response = get_response(user_message_rmv_punctuation)
         response = get_response(user_message_rmv_punctuation)
 
 
@@ -94,6 +64,7 @@ async def send_message(message: Message, user_message) -> None:
 
 
 async def schedule_daily_message():
+    global response
     print("一開始run schedule_daily_message時的response: ", response)
     while True:
         #wait for some time
@@ -137,7 +108,7 @@ async def on_ready():
 async def on_message(message: Message)-> None:
     print("*****當user有輸入任何文字時")
     print("on_message on fire時候的response: ", response)
-    # check if bot is not responding itself
+    # check if bot is responding itself
     if message.author == client.user:
         print("傳送message的是client自己")
         print("--------------END---------------")
@@ -163,7 +134,7 @@ async def on_message(message: Message)-> None:
 
 
         # new_user_message = await combine_userinput_record(user_message)
-        new_user_message = combine_userinput_record(user_message)
+        new_user_message = string_handler.combine_userinput_record(user_message)
         await send_message(message,new_user_message)
 
 

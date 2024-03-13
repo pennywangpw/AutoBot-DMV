@@ -62,7 +62,7 @@ def get_response(user_input: str):
     greeting_keyword = ["hello","hi","hey"]
     no_record_keyword = "theres no previous record"
 
-    #check user input includes 2 data -> 1.date 3. zipcode
+    #check user input includes two datas -> 1.date 3. zipcode
     if_in_keyword = False
     if_date_and_zipcode = False
     split_user_input_list = user_input.lower().split()
@@ -84,6 +84,7 @@ def get_response(user_input: str):
 
         #find the miles information
         mile_range = validation_handler.find_mile_range(split_user_input_list)
+        print("處理後的mileage: ", mile_range)
 
         #check if date and zipcode are provided
         if validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)!= None:
@@ -103,6 +104,7 @@ def get_response(user_input: str):
                 # return format_response(split_user_input_list,dmv_office_within_miles_data)
                 res["response"] = format_response(split_user_input_list,dmv_office_within_miles_data)
                 res["record"] = {"zipcode": input_zipcode,"datetime": input_datetime,"mile_range": mile_range}
+                print("3個都有資料-zipcode datetime mile_range: ", mile_range)
                 return res
             elif word in greeting_keyword:
                 if_in_keyword = True
@@ -125,9 +127,10 @@ def get_response(user_input: str):
     #checking if is valid user input
     #if not in keyword lists OR not valid date and zipcode
     if not (if_in_keyword or if_date_and_zipcode):
-        res["response"]=choice(['I do not understand... How can I help you?','Do you mind rephrasing that? How can I help you?'])
+        # res["response"]=choice(['I do not understand... How can I help you?','Do you mind rephrasing that? How can I help you?'])
+        res["response"]= 'Do you mind rephrasing that? How can I help you?'
+
         return res
-        # return choice(['I do not understand...','Do you mind rephrasing that?'])
 
     #if both numbers- zipcode and dates are provided
     else:
