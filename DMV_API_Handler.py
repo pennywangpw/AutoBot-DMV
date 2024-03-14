@@ -54,8 +54,8 @@ class DMVAPIHandler:
         url = f"https://www.dmv.ca.gov/portal/wp-json/dmv/v1/field-offices?q={zipcode}"
         response = requests.get(url)
         data = response.json()
-
         dmv_office_nearby = []
+
         for office in data:
             if office["distance"] < miles:
                 dmv_office_nearby.append(office)
