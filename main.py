@@ -8,8 +8,8 @@ from String_Handler import StringHandler
 
 # get token
 load_dotenv()
-TOKEN: Final[str] = os.getenv('TOKEN')
-print("main裡面的token: ",TOKEN)
+# TOKEN: Final[str] = os.getenv('TOKEN')
+# print("main裡面的token: ",TOKEN)
 
 
 # set up bot
@@ -26,7 +26,11 @@ print("一起動時的response: ", response)
 string_handler = StringHandler()
 
 
-
+#remove punctuation marks
+def remove_punctuation(user_input_string):
+    translator = str.maketrans('', '', string.punctuation)
+    result = user_input_string.translate(translator)
+    return result
 
 #message functionality- get the response and send to channel
 async def send_message(message: Message, user_message) -> None:
@@ -44,7 +48,7 @@ async def send_message(message: Message, user_message) -> None:
         user_message = user_message[1:]
 
     try:
-        user_message_rmv_punctuation= string_handler.remove_punctuation(user_message)
+        user_message_rmv_punctuation = string_handler.remove_punctuation(user_message)
         print("拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
 
         response = get_response(user_message_rmv_punctuation)
@@ -106,6 +110,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message: Message)-> None:
+    global response
     print("*****當user有輸入任何文字時")
     print("on_message on fire時候的response: ", response)
     # check if bot is responding itself
@@ -134,7 +139,7 @@ async def on_message(message: Message)-> None:
 
 
         # new_user_message = await combine_userinput_record(user_message)
-        new_user_message = string_handler.combine_userinput_record(user_message)
+        new_user_message = string_handler.combine_userinput_record(response,user_message)
         await send_message(message,new_user_message)
 
 

@@ -1,17 +1,18 @@
+import string
+
 class StringHandler:
     def __init__(self):
         pass
 
 
     #remove punctuation marks
-    def remove_punctuation(user_input_string):
+    def remove_punctuation(self,user_input_string):
         translator = str.maketrans('', '', string.punctuation)
         result = user_input_string.translate(translator)
         return result
 
     #combine user input and record
-    def combine_userinput_record(user_message):
-        global response
+    def combine_userinput_record(self,response,user_message):
         #pull out previous record
         previous_user_input = response["record"].values()
         print("pull out previous record: ", previous_user_input)

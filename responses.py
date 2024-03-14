@@ -82,9 +82,6 @@ def get_response(user_input: str):
     #split_user_input_list includes string
     else:
 
-        #find the miles information
-        mile_range = validation_handler.find_mile_range(split_user_input_list)
-        print("處理後的mileage: ", mile_range)
 
         #check if date and zipcode are provided
         if validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)!= None:
@@ -99,7 +96,11 @@ def get_response(user_input: str):
             return res
 
         for word in split_user_input_list:
-            if mile_range and if_date_and_zipcode:
+            #find the miles information
+            mile_range = validation_handler.find_mile_range(split_user_input_list)
+            print("處理後的mileage: ", mile_range)
+
+            if mile_range and input_datetime and input_zipcode:
                 dmv_office_within_miles_data = dmv_api_handler.get_dmv_office_nearby_within_miles_data_api(input_zipcode, int(mile_range))
                 # return format_response(split_user_input_list,dmv_office_within_miles_data)
                 res["response"] = format_response(split_user_input_list,dmv_office_within_miles_data)
