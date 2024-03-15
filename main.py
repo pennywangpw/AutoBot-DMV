@@ -7,7 +7,7 @@ import string, datetime, asyncio
 from String_Handler import StringHandler
 
 # get token
-load_dotenv()
+# load_dotenv()
 # TOKEN: Final[str] = os.getenv('TOKEN')
 # print("main裡面的token: ",TOKEN)
 
@@ -73,7 +73,7 @@ async def schedule_daily_message():
     while True:
         #wait for some time
         now = datetime.datetime.now()
-        then = now + datetime.timedelta(minutes= 1)
+        then = now + datetime.timedelta(hours= 1)
         wait_time = (then-now).total_seconds()
         print("看看now ",now)
         print("看看then ",then)

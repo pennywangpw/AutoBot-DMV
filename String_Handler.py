@@ -19,8 +19,9 @@ class StringHandler:
 
         combined_user_input_str = ""
 
+        #check previous record and add to combined_user_input_str without duplicating it
         for val in previous_user_input:
-            if val != None:
+            if val and user_message != val:
                 combined_user_input_str = combined_user_input_str + " " +  val
 
         #add current user input
