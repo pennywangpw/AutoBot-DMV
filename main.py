@@ -5,17 +5,27 @@ from discord import Intents, Client, Message
 from responses import get_response
 import string, datetime, asyncio
 from String_Handler import StringHandler
+import asyncpg
+from asyncpg.pool import create_pool
 
 # get token
 load_dotenv()
-# TOKEN: Final[str] = os.getenv('TOKEN')
-# print("main裡面的token: ",TOKEN)
-
+TOKEN: Final[str] = os.getenv('TOKEN')
+print("main裡面的token: ",TOKEN)
+print("I have removed")
 
 # set up bot
 intents: Intents = Intents.default()
 intents.message_content = True
 client: Client = Client(intents=intents)
+
+
+#set up db- credentials
+DATABASE = "dmv_bot"
+USER="postgres"
+PASSWORD="postgres"
+HOST ="localhost"
+
 
 #set a response to track if there's record or not
 response = {"response":None, "record":None}
@@ -101,15 +111,49 @@ async def schedule_daily_message():
             await send_message(None,input_record_str)
 
 
-# handle incoming messages
+# handle project if is active
 @client.event
 async def on_ready():
     print(f"{client.user} is now running!")
     print("*****一開啟")
     await schedule_daily_message()
 
+#insert data
+async def insert_user_data(email, username):
+    print("-----here's insert data function----", email , username)
+    try:
+        conn = await asyncpg.connect(
+            user=USER,
+            password=PASSWORD,
+            database=DATABASE,
+            host=HOST
+        )
+
+        sql = '''INSERT INTO "members" (email, username) VALUES ($1, $2)'''
+        sql2 = '''INSERT INTO "records" (zipcode, datetime) VALUES ($1, $2)'''
+
+        await conn.execute(sql, email, username)
+        await conn.execute(sql2, 95035, '20240420')
+
+        print("Data has been inserted successfully!")
+
+    except Exception as e:
+        print("Error occurred while inserting data:", e)
+
+    finally:
+        if conn:
+            await conn.close()
+
+# handle incoming messages
 @client.event
 async def on_message(message: Message)-> None:
+
+    username: str = str(message.author)
+    user_message: str = message.content
+    channel: str = str(message.channel)
+
+    await insert_user_data('crab@aa.io', 'Crab')
+
     global response
     print("*****當user有輸入任何文字時")
     print("on_message on fire時候的response: ", response)
@@ -119,9 +163,9 @@ async def on_message(message: Message)-> None:
         print("--------------END---------------")
         return
 
-    username: str = str(message.author)
-    user_message: str = message.content
-    channel: str = str(message.channel)
+    # username: str = str(message.author)
+    # user_message: str = message.content
+    # channel: str = str(message.channel)
 
     print("傳送message 不是client自己")
 
@@ -149,7 +193,12 @@ async def on_message(message: Message)-> None:
 
 # run bot
 def main()->None:
+
     client.run(token=TOKEN)
+
 
 if __name__ == "__main__":
     main()
+
+
+
