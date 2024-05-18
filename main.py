@@ -5,7 +5,10 @@ from discord import Intents, Client, Message
 from responses import get_response
 import string, datetime, asyncio
 from String_Handler import StringHandler
+from Database_Handler import DatabaseHandler
 import asyncpg
+import psycopg2
+import psycopg2.extras
 from asyncpg.pool import create_pool
 
 # get token
@@ -20,11 +23,70 @@ intents.message_content = True
 client: Client = Client(intents=intents)
 
 
-#set up db- credentials
-DATABASE = "dmv_bot"
-USER="postgres"
-PASSWORD="postgres"
-HOST ="localhost"
+# #set up db- credentials
+# hostname ="127.0.0.1"
+# database = "dmv_bot"
+# username = "postgres"
+# pwd = "postgres"
+# port_id = 5432
+# conn = None
+# cur = None
+
+
+# try:
+#     conn = psycopg2.connect(
+#         host = hostname,
+#         dbname = database,
+#         user = username,
+#         password = pwd,
+#         port = port_id
+#     )
+#     cur = conn.cursor(cursor_factory = psycopg2.extras.DictCursor)
+
+#     #clean up db to drop the table 
+#     cur.execute('DROP TABLE IF EXISTS member')
+
+#     #create table
+#     create_script = '''CREATE TABLE IF NOT EXISTS member(
+#                         id int PRIMARY KEY,
+#                         name varchar(30) NOT NULL,
+#                         email varchar(80) NOT NULL)'''
+#     cur.execute(create_script)
+
+#     #insert data in table
+#     insert_script = 'INSERT INTO member (id,name,email) VALUES(%s,%s,%s)'
+#     insert_values=[(1,'Penny','penny@sporton.com'),(2,'Neil','neil@sporton.com')]
+#     for val in insert_values:
+#         cur.execute(insert_script,val)
+
+
+#     #update data in table
+#     update_script = '''UPDATE member SET email= 'penny@sp.gov' WHERE id = 1'''
+#     cur.execute(update_script)
+
+
+#     #delete data in db
+#     delete_script = 'DELETE FROM member WHERE name= %s'
+#     delete_record = ("Penny",)
+#     cur.execute(delete_script,delete_record)
+
+#     #view data in db
+#     cur.execute('SELECT * FROM MEMBER')
+#     for val in cur.fetchall():
+#         print(val)
+#         print(val['name'],val['email'])
+
+#     conn.commit()
+
+# except Exception as error:
+#     print(error)
+
+# finally:
+#     if cur is not None:
+#         cur.close()
+#     if conn is not None:
+#         conn.close()
+
 
 
 #set a response to track if there's record or not
@@ -32,9 +94,9 @@ response = {"response":None, "record":None}
 print("一起動時的response: ", response)
 
 
-# create string_handler instance
+# create string_handler and database_handler instance
 string_handler = StringHandler()
-
+database_handler= DatabaseHandler()
 
 #remove punctuation marks
 def remove_punctuation(user_input_string):
@@ -77,6 +139,7 @@ async def send_message(message: Message, user_message) -> None:
         print(e)
 
 
+ 
 async def schedule_daily_message():
     global response
     print("一開始run schedule_daily_message時的response: ", response)
@@ -116,33 +179,9 @@ async def schedule_daily_message():
 async def on_ready():
     print(f"{client.user} is now running!")
     print("*****一開啟")
+    database_handler.connect_to_db()
     await schedule_daily_message()
 
-#insert data
-async def insert_user_data(email, username):
-    print("-----here's insert data function----", email , username)
-    try:
-        conn = await asyncpg.connect(
-            user=USER,
-            password=PASSWORD,
-            database=DATABASE,
-            host=HOST
-        )
-
-        sql = '''INSERT INTO "members" (email, username) VALUES ($1, $2)'''
-        sql2 = '''INSERT INTO "records" (zipcode, datetime) VALUES ($1, $2)'''
-
-        await conn.execute(sql, email, username)
-        await conn.execute(sql2, 95035, '20240420')
-
-        print("Data has been inserted successfully!")
-
-    except Exception as e:
-        print("Error occurred while inserting data:", e)
-
-    finally:
-        if conn:
-            await conn.close()
 
 # handle incoming messages
 @client.event
@@ -152,7 +191,7 @@ async def on_message(message: Message)-> None:
     user_message: str = message.content
     channel: str = str(message.channel)
 
-    await insert_user_data('crab@aa.io', 'Crab')
+    # await insert_user_data('crab@aa.io', 'Crab')
 
     global response
     print("*****當user有輸入任何文字時")
@@ -163,11 +202,10 @@ async def on_message(message: Message)-> None:
         print("--------------END---------------")
         return
 
-    # username: str = str(message.author)
-    # user_message: str = message.content
-    # channel: str = str(message.channel)
-
     print("傳送message 不是client自己")
+    #insert data in table
+    user_email = username + '@sporton.com'
+    database_handler.insert_user_data(user_email,username)
 
     print(f"[{channel}] {username}: '{user_message}'")
     print("這裡的message: ", message)
