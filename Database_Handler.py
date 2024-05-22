@@ -24,14 +24,25 @@ class DatabaseHandler:
             self.cur = self.conn.cursor(cursor_factory = psycopg2.extras.DictCursor)
 
             #clean up db to drop the table 
+            self.cur.execute('DROP TABLE IF EXISTS record')
             self.cur.execute('DROP TABLE IF EXISTS member')
 
-            #create table
-            create_script = '''CREATE TABLE IF NOT EXISTS member(
-                                id int PRIMARY KEY,
+
+            #create table- member
+            create_member_script = '''CREATE TABLE IF NOT EXISTS member(
+                                id bigint UNIQUE,
                                 name varchar(30) NOT NULL,
-                                email varchar(80) NOT NULL)'''
-            self.cur.execute(create_script)
+                                email varchar(80) NOT NULL UNIQUE)'''
+
+            create_record_script = '''CREATE TABLE IF NOT EXISTS record(
+                                member_id int PRIMARY KEY,
+                                input_date date NOT NULL,
+                                input_zipcode int NOT NULL,
+                                mile int,
+                                FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE)'''
+
+            self.cur.execute(create_member_script)
+            self.cur.execute(create_record_script)
 
             self.conn.commit()
             print("it's connecting to the database.....")
