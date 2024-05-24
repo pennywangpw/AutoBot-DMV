@@ -35,7 +35,7 @@ class ValidationHandler:
     def check_datetime_formate_validation(self,word):
         try:
             date_obj = datetime.strptime(word, "%Y%m%d")
-            return True
+            return date_obj
         except:
             return False
 
@@ -77,9 +77,10 @@ class ValidationHandler:
         input_datetime= None
         for word in user_input:
             if self.check_length_zipcode_input_validtion(word):
-                input_zipcode = word
-            elif self.check_datetime_formate_validation(word):
-                input_datetime = word
+                input_zipcode = int(word)
+            datetime_obj = self.check_datetime_formate_validation(word)
+            if datetime_obj is not None:
+                input_datetime = datetime_obj
 
         if input_zipcode != None and input_datetime != None:
             return input_zipcode,input_datetime

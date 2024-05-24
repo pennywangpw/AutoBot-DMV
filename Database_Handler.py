@@ -35,7 +35,7 @@ class DatabaseHandler:
                                 email varchar(80) NOT NULL UNIQUE)'''
 
             create_record_script = '''CREATE TABLE IF NOT EXISTS record(
-                                member_id int PRIMARY KEY,
+                                member_id bigint UNIQUE,
                                 input_date date NOT NULL,
                                 input_zipcode int NOT NULL,
                                 mile int,
@@ -50,21 +50,65 @@ class DatabaseHandler:
         except Exception as error:
             print(error)
 
-        # finally:
-        #     if self.cur is not None:
-        #         self.cur.close()
-        #     if self.conn is not None:
-        #         self.conn.close()
+    def close_db(self):
+        if self.cur is not None:
+            self.cur.close()
+        if self.conn is not None:
+            self.conn.close()
+        print("Database connection closed")
 
-    def insert_user_data(self,email,name):
+    #create a member
+    def insert_member(self,user_id,email,name):
+        print("insert_member check cur and conn: ", self.conn, self.cur)
         try:
             #insert data in table
             insert_script = 'INSERT INTO member (id,name,email) VALUES(%s,%s,%s)'
-            insert_values=[(1,name,email),(2,'Neil','neil@sporton.com')]
+            insert_values=[(user_id,name,email)]
             for val in insert_values:
                 self.cur.execute(insert_script,val)
                 self.conn.commit()
             print("insert successfully!!", email , name)
         except Exception as error:
-            print("insert_user_data error: ",error)
+            print("insert_member error: ",error)
+
+    #create a record
+    def insert_record(self,user_id,input_date, input_zipcode, mile=0):
+        print("insert_record--user_id,input_date, input_zipcode, mile: ",type(user_id),type(input_date), type(input_zipcode), type(mile))
+        print("insert_record check cur and conn: ", self.conn, self.cur)
+        try:
+            insert_script = 'INSERT INTO record (member_id,input_date,input_zipcode,mile) VALUES(%s,%s,%s,%s)'
+            insert_values=(user_id,input_date, input_zipcode, mile)
+            self.cur.execute(insert_script,insert_values)
+            self.conn.commit()
+            print("insert_record successfully!!")
+        except Exception as error:
+            print("insert_record error: ",error)
+
+    
+    #find a member
+    def find_the_member(self, user_id):
+        print("find_the_member check cur and conn: ", self.conn, self.cur)
+
+        print("find_the_member user_id: ",user_id, type(user_id))
+        self.cur.execute('SELECT * FROM member WHERE id = %s',(user_id,))
+        member = self.cur.fetchone()
+        print("find the member: ", member)
+        if member is not None:
+            return True
+        else:
+            return False
+
+    #find record
+    def find_member_record(self, user_id):
+        print("find_member_record check cur and conn: ", self.conn, self.cur)
+
+        print("view_user_record user_id: ",user_id, type(user_id))
+        self.cur.execute('SELECT * FROM record WHERE member_id = %s',(user_id,))
+        record = self.cur.fetchone()
+        print("what i get from record: ", record)
+        if record is not None:
+            return True
+        return False
+    
+
 

@@ -4,6 +4,7 @@ from DMV_API_Handler import DMVAPIHandler
 from Date_Handler import DateHandler
 import requests, datetime
 from datetime import datetime
+from Database_Handler import DatabaseHandler
 
 validation_handler= ValidationHandler()
 dmv_api_handler = DMVAPIHandler()
@@ -11,6 +12,8 @@ date_handler = DateHandler()
 
 res = {"response":None, "record":None}
 
+
+database_handler= DatabaseHandler()
 
 #compare user input date and earliest available date in zipcode area to find the earlier date
 def find_earliest_date(formated_input_date,formated_date_from_all_list, office_obj):
@@ -52,10 +55,47 @@ def format_response(user_input, nearby_dmv_offices_data):
     return response
 
 
+#check user input
+def check_user_input(user_input):
+    print("check_user_input: ", check_user_input)
+    date_keyword = ["date", "earlier", "dates"]
+    distance_keyword = ["miles", "mile"]
+    greeting_keyword = ["hello","hi","hey"]
+    no_record_keyword = "theres no previous record"
 
+    #check user input includes 1.date 2. zipcode are provided and valid
+    if_in_keyword = False
+    if_date_and_zipcode = False
+    split_user_input_list = user_input.lower().split()
+    print("get response function 裡面 將user input轉乘小寫後: ", split_user_input_list)
+    valid_date_zipcode = valid_date_zipcode
+
+    if valid_date_zipcode != None:
+        input_zipcode = valid_date_zipcode[0]
+        input_datetime = valid_date_zipcode[1]
+        return input_datetime,input_zipcode
+    
+    # #check user input includes any keywords above
+    # for word in user_input:
+    #     if word in greeting_keyword:
+    #         if_in_keyword = True
+    #         # return "Hello there! How can I help you ?"
+    #         res["response"]= "Hello there! How can I help you ?"
+    #         return res
+    #     elif word in date_keyword:
+    #         if_in_keyword = True
+    #         # return f"Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
+    #         res["response"]= "Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
+    #         return res
+    #     elif word in distance_keyword:
+    #         if_in_keyword = True
+    #         # return f"Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
+    #         res["response"]= "Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
+    #         return res
+        
 
 #response by user input
-def get_response(user_input: str):
+def get_response(message,user_input: str):
     res = {"response":None, "record":None}
     date_keyword = ["date", "earlier", "dates"]
     distance_keyword = ["miles", "mile"]
@@ -73,20 +113,23 @@ def get_response(user_input: str):
     input_datetime = None
     mile_range = None
 
+    valid_date_zipcode = validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)
     #if all word in split_user_input_list are numbers
-    if validation_handler.check_is_num(split_user_input_list) and validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list) != None:
+    if validation_handler.check_is_num(split_user_input_list) and valid_date_zipcode != None:
         if_date_and_zipcode = True
-        input_zipcode = validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)[0]
-        input_datetime = validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)[1]
+        input_zipcode = valid_date_zipcode[0]
+        input_datetime = valid_date_zipcode[1]
+        #insert record
+        database_handler.insert_record(message.author.id ,input_datetime, input_zipcode)
 
     #split_user_input_list includes string
     else:
 
 
         #check if date and zipcode are provided
-        if validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)!= None:
-            input_zipcode = validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)[0]
-            input_datetime = validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)[1]
+        if valid_date_zipcode!= None:
+            input_zipcode = valid_date_zipcode[0]
+            input_datetime = valid_date_zipcode[1]
             if_date_and_zipcode = True
         #check if there's no record
         if split_user_input_list == no_record_keyword:
