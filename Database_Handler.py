@@ -50,6 +50,14 @@ class DatabaseHandler:
         except Exception as error:
             print(error)
 
+
+    def run_query(query):
+        self.cur.execute(query)
+
+
+    def get_db_cursor(self):
+        return self.cur
+        
     def close_db(self):
         if self.cur is not None:
             self.cur.close()

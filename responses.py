@@ -114,14 +114,14 @@ def get_response(message,user_input: str):
     mile_range = None
 
     valid_date_zipcode = validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)
+
     #if all word in split_user_input_list are numbers
     if validation_handler.check_is_num(split_user_input_list) and valid_date_zipcode != None:
         if_date_and_zipcode = True
         input_zipcode = valid_date_zipcode[0]
         input_datetime = valid_date_zipcode[1]
-        #insert record
-        database_handler.insert_record(message.author.id ,input_datetime, input_zipcode)
-
+        cursor = database_handler.get_db_cursor()
+        print("check if cursor is still alive: ",cursor)
     #split_user_input_list includes string
     else:
 
