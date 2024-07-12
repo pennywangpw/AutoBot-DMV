@@ -6,16 +6,20 @@ from responses import get_response
 import string, datetime, asyncio
 from String_Handler import StringHandler
 from Database_Handler import DatabaseHandler
+from Validation_Handler import ValidationHandler
 import asyncpg
 import psycopg2
 import psycopg2.extras
 from asyncpg.pool import create_pool
 
+
+validation_handler= ValidationHandler()
+
 # get token
 load_dotenv()
 TOKEN: Final[str] = os.getenv('TOKEN')
 print("main裡面的token: ",TOKEN)
-print("I have removed")
+
 
 # set up bot
 intents: Intents = Intents.default()
@@ -31,62 +35,6 @@ client: Client = Client(intents=intents)
 # port_id = 5432
 # conn = None
 # cur = None
-
-
-# try:
-#     conn = psycopg2.connect(
-#         host = hostname,
-#         dbname = database,
-#         user = username,
-#         password = pwd,
-#         port = port_id
-#     )
-#     cur = conn.cursor(cursor_factory = psycopg2.extras.DictCursor)
-
-#     #clean up db to drop the table 
-#     cur.execute('DROP TABLE IF EXISTS member')
-
-#     #create table
-#     create_script = '''CREATE TABLE IF NOT EXISTS member(
-#                         id int PRIMARY KEY,
-#                         name varchar(30) NOT NULL,
-#                         email varchar(80) NOT NULL)'''
-#     cur.execute(create_script)
-
-#     #insert data in table
-#     insert_script = 'INSERT INTO member (id,name,email) VALUES(%s,%s,%s)'
-#     insert_values=[(1,'Penny','penny@sporton.com'),(2,'Neil','neil@sporton.com')]
-#     for val in insert_values:
-#         cur.execute(insert_script,val)
-
-
-#     #update data in table
-#     update_script = '''UPDATE member SET email= 'penny@sp.gov' WHERE id = 1'''
-#     cur.execute(update_script)
-
-
-#     #delete data in db
-#     delete_script = 'DELETE FROM member WHERE name= %s'
-#     delete_record = ("Penny",)
-#     cur.execute(delete_script,delete_record)
-
-#     #view data in db
-#     cur.execute('SELECT * FROM MEMBER')
-#     for val in cur.fetchall():
-#         print(val)
-#         print(val['name'],val['email'])
-
-#     conn.commit()
-
-# except Exception as error:
-#     print(error)
-
-# finally:
-#     if cur is not None:
-#         cur.close()
-#     if conn is not None:
-#         conn.close()
-
 
 
 #set a response to track if there's record or not
@@ -120,10 +68,11 @@ async def send_message(message: Message, user_message) -> None:
         user_message = user_message[1:]
 
     try:
+        #remove all the punctuation and run user input checker
         user_message_rmv_punctuation = string_handler.remove_punctuation(user_message)
         print("拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
 
-        response = get_response(user_message_rmv_punctuation)
+        response = get_response(message,user_message_rmv_punctuation)
 
 
         print("準備紀錄zipcode and date",response)
@@ -131,7 +80,7 @@ async def send_message(message: Message, user_message) -> None:
         # await message.author.send(response) if is_private else await message.channel.send(response)
         # await message.author.send(response["response"]) if is_private else await message.channel.send(response["response"])
         await message.author.send(response["response"]) if is_private else await channel.send(response["response"])
-
+        return response
 
 
     except Exception as e:
@@ -189,9 +138,8 @@ async def on_message(message: Message)-> None:
 
     username: str = str(message.author)
     user_message: str = message.content
+    user_id = message.author.id
     channel: str = str(message.channel)
-
-    # await insert_user_data('crab@aa.io', 'Crab')
 
     global response
     print("*****當user有輸入任何文字時")
@@ -202,29 +150,32 @@ async def on_message(message: Message)-> None:
         print("--------------END---------------")
         return
 
-    print("傳送message 不是client自己")
-    #insert data in table
-    user_email = username + '@sporton.com'
-    database_handler.insert_user_data(user_email,username)
+    print("傳送message 不是client自己: ", user_id)
+    #check if current user exists in db member
+    if database_handler.find_the_member(user_id):
+        print("current user exists in db member")
+    else:
+        #insert data in table
+        user_email = username + '@sporton.com'
+        print("存入user_id,user_email,username： ",user_id,user_email,username, type(user_id))
+        database_handler.insert_member(user_id,user_email,username)
 
     print(f"[{channel}] {username}: '{user_message}'")
     print("這裡的message: ", message)
 
     #check if there's no record in response
-    if response["record"] is None:
-        print("*****當user有輸入任何文字時---檢查 沒有previous record")
-        await send_message(message,user_message)
+    if database_handler.find_member_record(user_id):
+        print("find the member record!!")
+    else:
+        print("i'm going to insert member record" )
+        bot_response = await send_message(message,user_message)
+        #insert record
+        test = ["20240615","95035"]
+        test_datetime, test_zipcode =  validation_handler.check_zipcode_datetime_provided_and_valid(test)
+        database_handler.insert_record(user_id ,test_datetime, test_zipcode)
 
-    #check if there's record in response
-    elif response["record"] is not None:
-        print("*****當user有輸入任何文字時---檢查 有previous record")
-
-
-        # new_user_message = await combine_userinput_record(user_message)
-        new_user_message = string_handler.combine_userinput_record(response,user_message)
-        await send_message(message,new_user_message)
-
-
+        print("in main what response i got: ", bot_response)
+    
 
 
 
