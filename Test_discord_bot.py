@@ -6,8 +6,6 @@ from dmv_practice.Test_shared_data import nearby_dmv_offices
 
 
 
-TOKEN = 'MTE4NjQyNDc1MDcyNjIwNTQ1MQ.GIf3zY.pFG2ET_bEssLgfX7aKGqRui-vTIfY_DlysylrU'
-CHANNEL_ID = 1186427997851488266
 
 # Create an instance of the bot
 bot = commands.Bot(command_prefix='!', intents=discord.Intents.all())

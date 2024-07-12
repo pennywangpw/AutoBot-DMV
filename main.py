@@ -121,6 +121,7 @@ async def on_ready():
 #insert data
 async def insert_user_data(email, username):
     print("-----here's insert data function----", email , username)
+    conn = None
     try:
         conn = await asyncpg.connect(
             user=USER,
@@ -199,6 +200,3 @@ def main()->None:
 
 if __name__ == "__main__":
     main()
-
-
-
