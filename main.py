@@ -5,14 +5,21 @@ from discord import Intents, Client, Message
 from responses import get_response
 import string, datetime, asyncio
 from String_Handler import StringHandler
+from Database_Handler import DatabaseHandler
+from Validation_Handler import ValidationHandler
 import asyncpg
+import psycopg2
+import psycopg2.extras
 from asyncpg.pool import create_pool
+
+
+validation_handler= ValidationHandler()
 
 # get token
 load_dotenv()
 TOKEN: Final[str] = os.getenv('TOKEN')
 print("main裡面的token: ",TOKEN)
-print("I have removed")
+
 
 # set up bot
 intents: Intents = Intents.default()
@@ -20,11 +27,14 @@ intents.message_content = True
 client: Client = Client(intents=intents)
 
 
-#set up db- credentials
-DATABASE = "dmv_bot"
-USER="postgres"
-PASSWORD="postgres"
-HOST ="localhost"
+# #set up db- credentials
+# hostname ="127.0.0.1"
+# database = "dmv_bot"
+# username = "postgres"
+# pwd = "postgres"
+# port_id = 5432
+# conn = None
+# cur = None
 
 
 #set a response to track if there's record or not
@@ -32,9 +42,9 @@ response = {"response":None, "record":None}
 print("一起動時的response: ", response)
 
 
-# create string_handler instance
+# create string_handler and database_handler instance
 string_handler = StringHandler()
-
+database_handler= DatabaseHandler()
 
 #remove punctuation marks
 def remove_punctuation(user_input_string):
@@ -58,10 +68,11 @@ async def send_message(message: Message, user_message) -> None:
         user_message = user_message[1:]
 
     try:
+        #remove all the punctuation and run user input checker
         user_message_rmv_punctuation = string_handler.remove_punctuation(user_message)
         print("拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
 
-        response = get_response(user_message_rmv_punctuation)
+        response = get_response(message,user_message_rmv_punctuation)
 
 
         print("準備紀錄zipcode and date",response)
@@ -69,12 +80,13 @@ async def send_message(message: Message, user_message) -> None:
         # await message.author.send(response) if is_private else await message.channel.send(response)
         # await message.author.send(response["response"]) if is_private else await message.channel.send(response["response"])
         await message.author.send(response["response"]) if is_private else await channel.send(response["response"])
-
+        return response
 
 
     except Exception as e:
         print("有錯誤")
         print(e)
+
 
 
 async def schedule_daily_message():
@@ -116,6 +128,7 @@ async def schedule_daily_message():
 async def on_ready():
     print(f"{client.user} is now running!")
     print("*****一開啟")
+    database_handler.connect_to_db()
     await schedule_daily_message()
 
 #insert data
@@ -151,9 +164,8 @@ async def on_message(message: Message)-> None:
 
     username: str = str(message.author)
     user_message: str = message.content
+    user_id = message.author.id
     channel: str = str(message.channel)
-
-    await insert_user_data('crab@aa.io', 'Crab')
 
     global response
     print("*****當user有輸入任何文字時")
@@ -164,29 +176,31 @@ async def on_message(message: Message)-> None:
         print("--------------END---------------")
         return
 
-    # username: str = str(message.author)
-    # user_message: str = message.content
-    # channel: str = str(message.channel)
-
-    print("傳送message 不是client自己")
+    print("傳送message 不是client自己: ", user_id)
+    #check if current user exists in db member
+    if database_handler.find_the_member(user_id):
+        print("current user exists in db member")
+    else:
+        #insert data in table
+        user_email = username + '@sporton.com'
+        print("存入user_id,user_email,username： ",user_id,user_email,username, type(user_id))
+        database_handler.insert_member(user_id,user_email,username)
 
     print(f"[{channel}] {username}: '{user_message}'")
     print("這裡的message: ", message)
 
     #check if there's no record in response
-    if response["record"] is None:
-        print("*****當user有輸入任何文字時---檢查 沒有previous record")
-        await send_message(message,user_message)
+    if database_handler.find_member_record(user_id):
+        print("find the member record!!")
+    else:
+        print("i'm going to insert member record" )
+        bot_response = await send_message(message,user_message)
+        #insert record
+        test = ["20240615","95035"]
+        test_datetime, test_zipcode =  validation_handler.check_zipcode_datetime_provided_and_valid(test)
+        database_handler.insert_record(user_id ,test_datetime, test_zipcode)
 
-    #check if there's record in response
-    elif response["record"] is not None:
-        print("*****當user有輸入任何文字時---檢查 有previous record")
-
-
-        # new_user_message = await combine_userinput_record(user_message)
-        new_user_message = string_handler.combine_userinput_record(response,user_message)
-        await send_message(message,new_user_message)
-
+        print("in main what response i got: ", bot_response)
 
 
 

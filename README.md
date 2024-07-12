@@ -16,11 +16,18 @@ Now, with the DMV bot, you can simply provide the date you have and ask it to ch
 ![image](https://github.com/pennywangpw/dmv_practice/assets/114206215/911fad03-597f-4b12-9eff-98a7b23cf9b7)
 
 # Set up
+Part 1. Set up a bot application
+1.  Open the Discord developer portal (https://discord.com/developers/applications) and log into your account
+2.  Click on the "New Application" button
+3.  Enter a name and confirm the pop-up window by clicking the "Create" button
+4.  copy the bot TOKEN
 
-1.  Clone this repository 
-2.  run main.py file
+Part 2. Set up the application
+1.  Clone this repository
+2.  add your bot TOKEN
+3.  run main.py file
    
     ```bash
     python main.py
     ```
-3.  keep the bot active, and it will automatically keep updating for you 
+4.  keep the bot active, and it will automatically keep updating for you 
