@@ -88,7 +88,7 @@ async def send_message(message: Message, user_message) -> None:
         print(e)
 
 
- 
+
 async def schedule_daily_message():
     global response
     print("一開始run schedule_daily_message時的response: ", response)
@@ -131,6 +131,32 @@ async def on_ready():
     database_handler.connect_to_db()
     await schedule_daily_message()
 
+#insert data
+async def insert_user_data(email, username):
+    print("-----here's insert data function----", email , username)
+    conn = None
+    try:
+        conn = await asyncpg.connect(
+            user=USER,
+            password=PASSWORD,
+            database=DATABASE,
+            host=HOST
+        )
+
+        sql = '''INSERT INTO "members" (email, username) VALUES ($1, $2)'''
+        sql2 = '''INSERT INTO "records" (zipcode, datetime) VALUES ($1, $2)'''
+
+        await conn.execute(sql, email, username)
+        await conn.execute(sql2, 95035, '20240420')
+
+        print("Data has been inserted successfully!")
+
+    except Exception as e:
+        print("Error occurred while inserting data:", e)
+
+    finally:
+        if conn:
+            await conn.close()
 
 # handle incoming messages
 @client.event
@@ -175,7 +201,7 @@ async def on_message(message: Message)-> None:
         database_handler.insert_record(user_id ,test_datetime, test_zipcode)
 
         print("in main what response i got: ", bot_response)
-    
+
 
 
 
@@ -188,6 +214,3 @@ def main()->None:
 
 if __name__ == "__main__":
     main()
-
-
-
