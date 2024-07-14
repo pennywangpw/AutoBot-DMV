@@ -13,6 +13,7 @@ class DatabaseHandler:
         self.cur = None
 
     def connect_to_db(self):
+        print("這裡是直接呼叫db connection..")
         try:
             self.conn = psycopg2.connect(
                 host = self.hostname,
@@ -27,19 +28,33 @@ class DatabaseHandler:
             self.cur.execute('DROP TABLE IF EXISTS record')
             self.cur.execute('DROP TABLE IF EXISTS member')
 
-
-            #create table- member
+            # create table- member
             create_member_script = '''CREATE TABLE IF NOT EXISTS member(
-                                id bigint UNIQUE,
-                                name varchar(30) NOT NULL,
-                                email varchar(80) NOT NULL UNIQUE)'''
+                                    id bigint PRIMARY KEY,
+                                    name varchar(30) NOT NULL,
+                                    email varchar(80) NOT NULL UNIQUE)'''
 
             create_record_script = '''CREATE TABLE IF NOT EXISTS record(
-                                member_id bigint UNIQUE,
-                                input_date date NOT NULL,
-                                input_zipcode int NOT NULL,
-                                mile int,
-                                FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE)'''
+                                    id SERIAL PRIMARY KEY,
+                                    member_id bigint,
+                                    input_date date NOT NULL,
+                                    input_zipcode int NOT NULL,
+                                    mile int,
+                                    FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE)'''
+
+            # #create table- member
+            # create_member_script = '''CREATE TABLE IF NOT EXISTS member(
+            #                     id bigint UNIQUE,
+            #                     name varchar(30) NOT NULL,
+            #                     email varchar(80) NOT NULL UNIQUE)'''
+
+            # #create table- record
+            # create_record_script = '''CREATE TABLE IF NOT EXISTS record(
+            #                     member_id bigint UNIQUE,
+            #                     input_date date NOT NULL,
+            #                     input_zipcode int NOT NULL,
+            #                     mile int,
+            #                     FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE)'''
 
             self.cur.execute(create_member_script)
             self.cur.execute(create_record_script)
@@ -51,7 +66,7 @@ class DatabaseHandler:
             print(error)
 
 
-    def run_query(query):
+    def run_query(self,query):
         self.cur.execute(query)
 
 
@@ -75,15 +90,19 @@ class DatabaseHandler:
             for val in insert_values:
                 self.cur.execute(insert_script,val)
                 self.conn.commit()
-            print("insert successfully!!", email , name)
+            print("成功存入new member insert successfully!!", email , name)
         except Exception as error:
-            print("insert_member error: ",error)
+            print("存入新成員有問題insert_member error: ",error)
 
     #create a record
     def insert_record(self,user_id,input_date, input_zipcode, mile=0):
-        print("insert_record--user_id,input_date, input_zipcode, mile: ",type(user_id),type(input_date), type(input_zipcode), type(mile))
+        print("insert_record--user_id,input_date, input_zipcode, mile: ",user_id,input_date, input_zipcode, mile)
         print("insert_record check cur and conn: ", self.conn, self.cur)
         try:
+            # Check if the member exists
+            if not self.find_the_member(user_id):
+                raise ValueError(f"Member with ID {user_id} does not exist.")
+            
             insert_script = 'INSERT INTO record (member_id,input_date,input_zipcode,mile) VALUES(%s,%s,%s,%s)'
             insert_values=(user_id,input_date, input_zipcode, mile)
             self.cur.execute(insert_script,insert_values)
@@ -101,22 +120,141 @@ class DatabaseHandler:
         self.cur.execute('SELECT * FROM member WHERE id = %s',(user_id,))
         member = self.cur.fetchone()
         print("find the member: ", member)
-        if member is not None:
-            return True
-        else:
-            return False
+        return member is not None
+        # print("find the member: ", member)
+        # if member is not None:
+        #     return True
+        # else:
+        #     return False
 
     #find record
     def find_member_record(self, user_id):
-        print("find_member_record check cur and conn: ", self.conn, self.cur)
+        print("在record中找尋～find_member_record check cur and conn: ", self.conn, self.cur)
 
         print("view_user_record user_id: ",user_id, type(user_id))
         self.cur.execute('SELECT * FROM record WHERE member_id = %s',(user_id,))
         record = self.cur.fetchone()
-        print("what i get from record: ", record)
-        if record is not None:
-            return True
-        return False
+        print("what I get from record: ", record)
+        return record is not None
+        # print("what i get from record: ", record)
+        # if record is not None:
+        #     return True
+        # return False
     
 
+##testing
+# import psycopg2
+# import psycopg2.extras
 
+# class DatabaseHandler:
+#     def __init__(self):
+#         # Set up db- credentials
+#         self.hostname = "127.0.0.1"
+#         self.database = "dmv_bot"
+#         self.username = "postgres"
+#         self.pwd = "postgres"
+#         self.port_id = 5432
+#         self.conn = None
+#         self.cur = None
+
+#     def connect_to_db(self):
+#         print("Connecting to database...")
+#         try:
+#             self.conn = psycopg2.connect(
+#                 host=self.hostname,
+#                 dbname=self.database,
+#                 user=self.username,
+#                 password=self.pwd,
+#                 port=self.port_id
+#             )
+#             self.cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+#             # Clean up db to drop the table 
+#             self.cur.execute('DROP TABLE IF EXISTS record')
+#             self.cur.execute('DROP TABLE IF EXISTS member')
+
+#             # Create table- member
+#             create_member_script = '''CREATE TABLE IF NOT EXISTS member(
+#                                       id BIGINT PRIMARY KEY,
+#                                       name VARCHAR(30) NOT NULL,
+#                                       email VARCHAR(80) NOT NULL UNIQUE)'''
+
+#             create_record_script = '''CREATE TABLE IF NOT EXISTS record(
+#                                       id SERIAL PRIMARY KEY,
+#                                       member_id BIGINT,
+#                                       input_date DATE NOT NULL,
+#                                       input_zipcode INT NOT NULL,
+#                                       mile INT,
+#                                       FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE)'''
+
+#             self.cur.execute(create_member_script)
+#             self.cur.execute(create_record_script)
+
+#             self.conn.commit()
+#             print("Connected to the database and tables created.")
+
+#         except Exception as error:
+#             print("Error connecting to the database: ", error)
+
+#     def run_query(self, query):
+#         self.cur.execute(query)
+
+#     def get_db_cursor(self):
+#         return self.cur
+        
+#     def close_db(self):
+#         if self.cur is not None:
+#             self.cur.close()
+#         if self.conn is not None:
+#             self.conn.close()
+#         print("Database connection closed")
+
+#     # Create a member
+#     def insert_member(self, user_id, email, name):
+#         print("insert_member check cur and conn: ", self.conn, self.cur)
+#         try:
+#             # Insert data in table
+#             insert_script = 'INSERT INTO member (id, name, email) VALUES (%s, %s, %s)'
+#             insert_values = (user_id, name, email)
+#             print(f"Executing insert: {insert_script} with values {insert_values}")
+#             self.cur.execute(insert_script, insert_values)
+#             self.conn.commit()
+#             print("New member inserted successfully!!", email, name)
+#         except Exception as error:
+#             print("Error inserting new member: ", error)
+
+#     # Create a record
+#     def insert_record(self, user_id, input_date, input_zipcode, mile=0):
+#         print("insert_record--user_id, input_date, input_zipcode, mile: ", user_id, input_date, input_zipcode, mile)
+#         print("insert_record check cur and conn: ", self.conn, self.cur)
+#         try:
+#             # Check if the member exists
+#             if not self.find_the_member(user_id):
+#                 raise ValueError(f"Member with ID {user_id} does not exist.")
+            
+#             insert_script = 'INSERT INTO record (member_id, input_date, input_zipcode, mile) VALUES (%s, %s, %s, %s)'
+#             insert_values = (user_id, input_date, input_zipcode, mile)
+#             print(f"Executing insert: {insert_script} with values {insert_values}")
+#             self.cur.execute(insert_script, insert_values)
+#             self.conn.commit()
+#             print("Record inserted successfully!!")
+#         except Exception as error:
+#             print("Error inserting record: ", error)
+
+#     # Find a member
+#     def find_the_member(self, user_id):
+#         print("find_the_member check cur and conn: ", self.conn, self.cur)
+#         print("find_the_member user_id: ", user_id, type(user_id))
+#         self.cur.execute('SELECT * FROM member WHERE id = %s', (user_id,))
+#         member = self.cur.fetchone()
+#         print("find the member: ", member)
+#         return member is not None
+
+#     # Find record
+#     def find_member_record(self, user_id):
+#         print("在record中找尋～find_member_record check cur and conn: ", self.conn, self.cur)
+#         print("view_user_record user_id: ", user_id, type(user_id))
+#         self.cur.execute('SELECT * FROM record WHERE member_id = %s', (user_id,))
+#         record = self.cur.fetchone()
+#         print("what I get from record: ", record)
+#         return record is not None

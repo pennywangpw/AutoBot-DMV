@@ -73,6 +73,7 @@ class ValidationHandler:
 
         return "NOT PASS VALIDATION. This is invalid input.\nPlease provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087)"
 
+    #return datetime and zipcode 
     def check_zipcode_datetime_provided_and_valid(self,user_input):
         input_zipcode= None
         input_datetime= None
@@ -87,7 +88,7 @@ class ValidationHandler:
 
         if input_zipcode != None and input_datetime != None:
             print(input_zipcode,input_datetime,type(input_zipcode),type(input_datetime))
-            return input_datetime,input_zipcode
+            return input_zipcode,input_datetime
 
 
 

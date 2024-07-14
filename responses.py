@@ -106,7 +106,7 @@ def get_response(message,user_input: str):
     if_in_keyword = False
     if_date_and_zipcode = False
     split_user_input_list = user_input.lower().split()
-    print("get response function 裡面 將user input轉乘小寫後: ", split_user_input_list)
+    print("get_response正在running...-get response function 裡面 將user input轉乘小寫後: ", split_user_input_list)
 
 
     input_zipcode = None
@@ -171,6 +171,8 @@ def get_response(message,user_input: str):
     #checking if is valid user input
     #if not in keyword lists OR not valid date and zipcode
     if not (if_in_keyword or if_date_and_zipcode):
+        print("get_response-zipcode 和dates只提供其中一個")
+
         # res["response"]=choice(['I do not understand... How can I help you?','Do you mind rephrasing that? How can I help you?'])
         res["response"]= 'Do you mind rephrasing that? How can I help you?'
 
@@ -178,6 +180,7 @@ def get_response(message,user_input: str):
 
     #if both numbers- zipcode and dates are provided
     else:
+        print("get_response-zipcode 和dates都由提供")
         for num in split_user_input_list:
             if validation_handler.check_length_zipcode_input_validtion(num):
                 zipcode = int(num)
