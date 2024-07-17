@@ -5,6 +5,11 @@ class ValidationHandler:
     def __init__(self):
         pass
 
+    def check_if_all_str(self,user_input):
+        for word in user_input:
+            if not isinstance(word,str):
+                return False
+        return True
 
     #check if the each word in user_input can be changed to number
     def check_is_num(self,user_input):
@@ -55,26 +60,9 @@ class ValidationHandler:
             except ValueError as e:
                 return e
 
-    # V2 - date and zipcode input validation- check datetime formate & zipcode formate with correct length
-    def date_zipcode_input_validation_V2(self,user_input):
-        print(f"傳入function user_input list  {user_input} {type(user_input)}")
-        if_date = False
-        if_zipcode = False
-        for word in user_input:
-            if self.check_datetime_formate_validation(word):
-                if_date = True
-                continue
-            elif self.check_convert_into_num(word) and self.check_length_zipcode_input_validtion(word):
-                if_zipcode = True
-                continue
-
-        if if_date and if_zipcode:
-            return "pass"
-
-        return "NOT PASS VALIDATION. This is invalid input.\nPlease provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087)"
-
     #return datetime and zipcode 
     def check_zipcode_datetime_provided_and_valid(self,user_input):
+        print("確認是否有zipcode and datetime")
         input_zipcode= None
         input_datetime= None
         for word in user_input:

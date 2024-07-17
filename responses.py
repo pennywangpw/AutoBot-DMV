@@ -5,6 +5,7 @@ from Date_Handler import DateHandler
 import requests, datetime
 from datetime import datetime
 from Database_Handler import DatabaseHandler
+import datetime
 
 validation_handler= ValidationHandler()
 dmv_api_handler = DMVAPIHandler()
@@ -55,45 +56,6 @@ def format_response(user_input, nearby_dmv_offices_data):
     return response
 
 
-#check user input
-def check_user_input(user_input):
-    print("check_user_input: ", check_user_input)
-    date_keyword = ["date", "earlier", "dates"]
-    distance_keyword = ["miles", "mile"]
-    greeting_keyword = ["hello","hi","hey"]
-    no_record_keyword = "theres no previous record"
-
-    #check user input includes 1.date 2. zipcode are provided and valid
-    if_in_keyword = False
-    if_date_and_zipcode = False
-    split_user_input_list = user_input.lower().split()
-    print("get response function 裡面 將user input轉乘小寫後: ", split_user_input_list)
-    valid_date_zipcode = valid_date_zipcode
-
-    if valid_date_zipcode != None:
-        input_zipcode = valid_date_zipcode[0]
-        input_datetime = valid_date_zipcode[1]
-        return input_datetime,input_zipcode
-    
-    # #check user input includes any keywords above
-    # for word in user_input:
-    #     if word in greeting_keyword:
-    #         if_in_keyword = True
-    #         # return "Hello there! How can I help you ?"
-    #         res["response"]= "Hello there! How can I help you ?"
-    #         return res
-    #     elif word in date_keyword:
-    #         if_in_keyword = True
-    #         # return f"Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
-    #         res["response"]= "Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
-    #         return res
-    #     elif word in distance_keyword:
-    #         if_in_keyword = True
-    #         # return f"Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
-    #         res["response"]= "Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
-    #         return res
-        
-
 #response by user input
 def get_response(message,user_input: str):
     res = {"response":None, "record":None}
@@ -101,92 +63,190 @@ def get_response(message,user_input: str):
     distance_keyword = ["miles", "mile"]
     greeting_keyword = ["hello","hi","hey"]
     no_record_keyword = "theres no previous record"
+    user_input_datetime =""
+    user_input_zipcode =""
 
-    #check user input includes two datas -> 1.date 3. zipcode
-    if_in_keyword = False
-    if_date_and_zipcode = False
+
+
+    #check if user input are all string, and check if it exsits in keyword
     split_user_input_list = user_input.lower().split()
     print("get_response正在running...-get response function 裡面 將user input轉乘小寫後: ", split_user_input_list)
 
+    #iterate through word 確認是否有數字？ 和 datetime?
+        #有數字？是否為valid的zipcode格式？
+        #有datetime？是否為valid的datetime格式？
+    #是否在keyword裡面？
+    #若沒有數字也沒有datetime ,也不在keyword裡面 就回答不知道
+    for word in split_user_input_list:
+        if validation_handler.check_convert_into_num(word) and validation_handler.check_length_zipcode_input_validtion(word):
+            print("user input 裡面的word可以轉成數字,並valid zipcode格式")
+            user_input_zipcode = word
+        elif validation_handler.check_datetime_formate_validation(word):
+            print("user input 裡面的word可以轉成datetime,並valid dattime格式")
 
-    input_zipcode = None
-    input_datetime = None
-    mile_range = None
+            user_input_datetime = word
 
-    valid_date_zipcode = validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)
-
-    #if all word in split_user_input_list are numbers
-    if validation_handler.check_is_num(split_user_input_list) and valid_date_zipcode != None:
-        if_date_and_zipcode = True
-        input_zipcode = valid_date_zipcode[0]
-        input_datetime = valid_date_zipcode[1]
-        cursor = database_handler.get_db_cursor()
-        print("check if cursor is still alive: ",cursor)
-    #split_user_input_list includes string
+    if user_input_datetime and user_input_zipcode:
+        res["response"]= "let me check it for you if there's earlier date than the date you are looking for...."
+        res["record"] = user_input_zipcode,user_input_datetime
+    
     else:
-
-
-        #check if date and zipcode are provided
-        if valid_date_zipcode!= None:
-            input_zipcode = valid_date_zipcode[0]
-            input_datetime = valid_date_zipcode[1]
-            if_date_and_zipcode = True
-        #check if there's no record
-        if split_user_input_list == no_record_keyword:
-            print("相等沒有任何record紀錄 不知道要怎麼幫忙")
-            if_in_keyword = True
-            res["response"]= "Hello there! How can I help you ?"
-            return res
-
+        #是否在keyword裡面？
         for word in split_user_input_list:
-            #find the miles information
-            mile_range = validation_handler.find_mile_range(split_user_input_list)
-            print("處理後的mileage: ", mile_range)
 
-            if mile_range and input_datetime and input_zipcode:
-                dmv_office_within_miles_data = dmv_api_handler.get_dmv_office_nearby_within_miles_data_api(input_zipcode, int(mile_range))
-                # return format_response(split_user_input_list,dmv_office_within_miles_data)
-                res["response"] = format_response(split_user_input_list,dmv_office_within_miles_data)
-                res["record"] = {"zipcode": input_zipcode,"datetime": input_datetime,"mile_range": mile_range}
-                print("3個都有資料-zipcode datetime mile_range: ", mile_range)
-                return res
-            elif word in greeting_keyword:
-                if_in_keyword = True
+            if word in greeting_keyword:
                 # return "Hello there! How can I help you ?"
                 res["response"]= "Hello there! How can I help you ?"
-                return res
+                break
+
             elif word in date_keyword:
-                if_in_keyword = True
+                print("user input 裡面的word是打招呼")
                 # return f"Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
                 res["response"]= "Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
-                return res
+                break
             elif word in distance_keyword:
-                if_in_keyword = True
+                print("user input 裡面的word是問距離")
+
                 # return f"Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
                 res["response"]= "Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
-                return res
+                break
+            else:
+                print("user input 裡面的word 沒有明確說明 無法判斷")
+
+                res["response"]= "sorry i don't understand....you may provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
+        
+    return res
+
+  
+    #     #iterate through word 確認如果有出現在關鍵字裡面,就不用再繼續找
+    #     print("user input 都是string")
+    #     for word in split_user_input_list:
+
+    #         if word in greeting_keyword:
+    #             # return "Hello there! How can I help you ?"
+    #             res["response"]= "Hello there! How can I help you ?"
+    #             break
+    #         elif word in date_keyword:
+    #             # return f"Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
+    #             res["response"]= "Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
+    #             break
+    #         elif word in distance_keyword:
+    #             # return f"Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
+    #             res["response"]= "Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
+    #             break
+    #         else:
+    #             res["response"]= "sorry i don't understand....you may provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
+    #     return res
+    # #若user input裡有包含數字,確認是否有zipcode and date?
+    # else:
+    #     for word in split_user_input_list:
+    #         #確認是否可以轉成datetime
+    #         if validation_handler.check_datetime_formate_validation(word):
+    #             user_input_datetime = validation_handler.check_datetime_formate_validation(word)
+    #         #確認是否為zipcode
+    #         elif validation_handler.check_convert_into_num(word) and validation_handler.check_length_zipcode_input_validtion(word):
+    #             user_input_zipcode = word
+
+    # print("get response整理後的user_input_datetime & user_input_zipcode: ", user_input_datetime,user_input_zipcode)
+
+##保留前面的紀錄
+# #response by user input
+# def get_response(message,user_input: str):
+#     res = {"response":None, "record":None}
+#     date_keyword = ["date", "earlier", "dates"]
+#     distance_keyword = ["miles", "mile"]
+#     greeting_keyword = ["hello","hi","hey"]
+#     no_record_keyword = "theres no previous record"
+
+#     #check user input includes two datas -> 1.date 3. zipcode
+#     if_in_keyword = False
+#     if_date_and_zipcode = False
+#     split_user_input_list = user_input.lower().split()
+#     print("get_response正在running...-get response function 裡面 將user input轉乘小寫後: ", split_user_input_list)
+
+
+#     input_zipcode = None
+#     input_datetime = None
+#     mile_range = None
+
+#     # valid_date_zipcode = validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)
+
+#     #if all word in split_user_input_list are numbers
+#     if validation_handler.check_is_num(split_user_input_list) and valid_date_zipcode != None:
+#         valid_date_zipcode = validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)
+
+#         print("處理要怎麼回應,如果user input都是數字")
+#         if_date_and_zipcode = True
+#         input_zipcode = valid_date_zipcode[0]
+#         input_datetime = valid_date_zipcode[1]
+#         cursor = database_handler.get_db_cursor()
+#         print("check if cursor is still alive: ",cursor)
+#     #split_user_input_list includes string
+#     else:
+#         print("處理要怎麼回應,如果user input有數字 有string")
+
+
+#         #check if date and zipcode are provided
+#         if valid_date_zipcode!= None:
+#             input_zipcode = valid_date_zipcode[0]
+#             input_datetime = valid_date_zipcode[1]
+#             if_date_and_zipcode = True
+#         #check if there's no record
+#         if split_user_input_list == no_record_keyword:
+#             print("相等沒有任何record紀錄 不知道要怎麼幫忙")
+#             if_in_keyword = True
+#             res["response"]= "Hello there! How can I help you ?"
+#             return res
+
+#         for word in split_user_input_list:
+#             #find the miles information
+#             mile_range = validation_handler.find_mile_range(split_user_input_list)
+#             print("處理後的mileage: ", mile_range)
+
+#             if mile_range and input_datetime and input_zipcode:
+#                 dmv_office_within_miles_data = dmv_api_handler.get_dmv_office_nearby_within_miles_data_api(input_zipcode, int(mile_range))
+#                 # return format_response(split_user_input_list,dmv_office_within_miles_data)
+#                 res["response"] = format_response(split_user_input_list,dmv_office_within_miles_data)
+#                 res["record"] = {"zipcode": input_zipcode,"datetime": input_datetime,"mile_range": mile_range}
+#                 print("3個都有資料-zipcode datetime mile_range: ", mile_range)
+#                 return res
+#             elif word in greeting_keyword:
+#                 if_in_keyword = True
+#                 # return "Hello there! How can I help you ?"
+#                 res["response"]= "Hello there! How can I help you ?"
+#                 return res
+#             elif word in date_keyword:
+#                 if_in_keyword = True
+#                 # return f"Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
+#                 res["response"]= "Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
+#                 return res
+#             elif word in distance_keyword:
+#                 if_in_keyword = True
+#                 # return f"Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
+#                 res["response"]= "Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
+#                 return res
 
 
 
-    #checking if is valid user input
-    #if not in keyword lists OR not valid date and zipcode
-    if not (if_in_keyword or if_date_and_zipcode):
-        print("get_response-zipcode 和dates只提供其中一個")
+#     #checking if is valid user input
+#     #if not in keyword lists OR not valid date and zipcode
+#     if not (if_in_keyword or if_date_and_zipcode):
+#         print("get_response-zipcode 和dates只提供其中一個")
 
-        # res["response"]=choice(['I do not understand... How can I help you?','Do you mind rephrasing that? How can I help you?'])
-        res["response"]= 'Do you mind rephrasing that? How can I help you?'
+#         # res["response"]=choice(['I do not understand... How can I help you?','Do you mind rephrasing that? How can I help you?'])
+#         res["response"]= 'Do you mind rephrasing that? How can I help you?'
 
-        return res
+#         return res
 
-    #if both numbers- zipcode and dates are provided
-    else:
-        print("get_response-zipcode 和dates都由提供")
-        for num in split_user_input_list:
-            if validation_handler.check_length_zipcode_input_validtion(num):
-                zipcode = int(num)
-                nearby_dmv_offices_data =  dmv_api_handler.get_dmv_office_nearby_data_api(zipcode)
-                #format response data AND related record
-                # return format_response(split_user_input_list,nearby_dmv_offices_data)
-                res["response"] = format_response(split_user_input_list,nearby_dmv_offices_data)
-                res["record"] = {"zipcode": input_zipcode,"datetime": input_datetime,"mile_range": mile_range}
-                return res
+#     #if both numbers- zipcode and dates are provided
+#     else:
+#         print("get_response-zipcode 和dates都由提供")
+#         for num in split_user_input_list:
+#             if validation_handler.check_length_zipcode_input_validtion(num):
+#                 zipcode = int(num)
+#                 nearby_dmv_offices_data =  dmv_api_handler.get_dmv_office_nearby_data_api(zipcode)
+#                 #format response data AND related record
+#                 # return format_response(split_user_input_list,nearby_dmv_offices_data)
+#                 res["response"] = format_response(split_user_input_list,nearby_dmv_offices_data)
+#                 res["record"] = {"zipcode": input_zipcode,"datetime": input_datetime,"mile_range": mile_range}
+#                 return res

@@ -7,6 +7,8 @@ import string, datetime, asyncio
 from String_Handler import StringHandler
 from Database_Handler import DatabaseHandler
 from Validation_Handler import ValidationHandler
+from DMV_API_Handler import DMVAPIHandler
+from Date_Handler import DateHandler
 import asyncpg
 import psycopg2
 import psycopg2.extras
@@ -45,6 +47,8 @@ print("一起動時的response: ", response)
 # create string_handler and database_handler instance
 string_handler = StringHandler()
 database_handler= DatabaseHandler()
+dmv_api_handler = DMVAPIHandler()
+date_handler = DateHandler()
 
 #remove punctuation marks
 def remove_punctuation(user_input_string):
@@ -175,19 +179,25 @@ async def on_message(message: Message) -> None:
         print("拿db裡面的user record再拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
         get_response(user_record_input,user_message_rmv_punctuation)
     else:
+        #在db裡面沒有 member record,確認bot_response 裡面有沒有record?
+        
         print("db 沒有這個 user_id 紀錄 i'm going to insert member record")
 
-        # 檢查 user 有沒又提供 zipcode, date
+
+        print("db 沒有這個 user_id 紀錄 i'm going to insert member record - 先檢查user input message是啥", user_message)
+        
         bot_response = await send_message(message, user_message)
         print("db 沒有這個 user_id 紀錄 i'm going to insert member record - send message 到的 res 回給 chl", bot_response)
-        #沒有這個record的時候我要回覆how can i help you?
-        
-        # database_handler.connect_to_db()
-        # test = ["20240615", "95035"]
-        # test_zipcode, test_datetime = validation_handler.check_zipcode_datetime_provided_and_valid(test)
-        # database_handler.insert_record(user_id, test_datetime, test_zipcode)
+        if bot_response["record"]:
+            print("bot_response 有record 代表user 有input valid info", bot_response["record"], type(bot_response["record"]))
+            nearby_dmvs = dmv_api_handler.get_dmv_office_nearby_data_api(bot_response["record"][0])
+            print("找到附近的dmv :", nearby_dmvs)
+            for dmv_location in nearby_dmvs: 
+                print("找到附近的dmv id有那咧:", dmv_location["id"])
+                # userinput_datetime = date_handler.make_datetime_formate(bot_response["record"][1])
+                availaable_time_slot = dmv_api_handler.get_time_slot_data_api(dmv_location["id"],bot_response["record"][1])
+                print("找到附近的dmv availaable_time_slot :", availaable_time_slot)
 
-        # print("in main what response I got: ", bot_response)
 
 
 
