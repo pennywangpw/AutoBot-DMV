@@ -7,6 +7,7 @@ class StringHandler:
 
     #remove punctuation marks
     def remove_punctuation(self,user_input_string):
+        print("移除標點符號: ",user_input_string)
         translator = str.maketrans('', '', string.punctuation)
         result = user_input_string.translate(translator)
         return result

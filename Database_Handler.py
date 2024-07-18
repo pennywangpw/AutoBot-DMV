@@ -134,8 +134,8 @@ class DatabaseHandler:
         print("view_user_record user_id: ",user_id, type(user_id))
         self.cur.execute('SELECT * FROM record WHERE member_id = %s',(user_id,))
         record = self.cur.fetchone()
-        print("what I get from record: ", record)
-        return record is not None
+        print("what I get from record: ", record, type(record))
+        return record 
         # print("what i get from record: ", record)
         # if record is not None:
         #     return True

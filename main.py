@@ -15,7 +15,7 @@ import psycopg2.extras
 from asyncpg.pool import create_pool
 
 
-validation_handler= ValidationHandler()
+
 
 # get token
 load_dotenv()
@@ -49,6 +49,7 @@ string_handler = StringHandler()
 database_handler= DatabaseHandler()
 dmv_api_handler = DMVAPIHandler()
 date_handler = DateHandler()
+validation_handler= ValidationHandler()
 
 #remove punctuation marks
 def remove_punctuation(user_input_string):
@@ -147,6 +148,8 @@ async def on_message(message: Message) -> None:
     global response
     print("*****當 user 有輸入任何文字時: ", user_message)
     print("on_message on fire 時候的 response: ", response)
+
+    #確認身份
     # Check if bot is responding itself
     if message.author == client.user:
         print("傳送 message 的是 client 自己")
@@ -166,37 +169,31 @@ async def on_message(message: Message) -> None:
         database_handler.insert_member(user_id, user_email, username)
 
     print("查詢member是否已經加入？",database_handler.find_the_member(user_id))
+
+    #確認紀錄
     # Check if there's no record in response
     if database_handler.find_member_record(user_id):
         print("在 db 找尋這個 user_id 的紀錄 找到 find the member record!!")
         #用user 的紀錄尋找
         user_record = database_handler.find_member_record(user_id)
-        user_record_input = user_record[3]
+        print("找到 find the member record!!user_record:",user_record)
+
+        user_record_input = date_handler.make_datetime_to_string_format(user_record[2]) + " " +str(user_record[3])
         print("找到 find the member record!!user_record_input:",user_record_input)
 
         #remove all the punctuation and run user input checker
         user_message_rmv_punctuation = string_handler.remove_punctuation(user_record_input)
         print("拿db裡面的user record再拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
-        get_response(user_record_input,user_message_rmv_punctuation)
+        get_response(user_record_input,user_message_rmv_punctuation, False)
     else:
         #在db裡面沒有 member record,確認bot_response 裡面有沒有record?
-        
-        print("db 沒有這個 user_id 紀錄 i'm going to insert member record")
-
-
         print("db 沒有這個 user_id 紀錄 i'm going to insert member record - 先檢查user input message是啥", user_message)
-        
         bot_response = await send_message(message, user_message)
         print("db 沒有這個 user_id 紀錄 i'm going to insert member record - send message 到的 res 回給 chl", bot_response)
+
         if bot_response["record"]:
             print("bot_response 有record 代表user 有input valid info", bot_response["record"], type(bot_response["record"]))
-            nearby_dmvs = dmv_api_handler.get_dmv_office_nearby_data_api(bot_response["record"][0])
-            print("找到附近的dmv :", nearby_dmvs)
-            for dmv_location in nearby_dmvs: 
-                print("找到附近的dmv id有那咧:", dmv_location["id"])
-                # userinput_datetime = date_handler.make_datetime_formate(bot_response["record"][1])
-                availaable_time_slot = dmv_api_handler.get_time_slot_data_api(dmv_location["id"],bot_response["record"][1])
-                print("找到附近的dmv availaable_time_slot :", availaable_time_slot)
+            database_handler.insert_record(user_id,bot_response["record"][1],bot_response["record"][0])
 
 
 
