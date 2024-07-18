@@ -67,6 +67,7 @@ def format_response(user_input, nearby_dmv_offices_data):
 
 #response by user input
 def get_response(message,user_input: str,first_time_user =True):
+    print("這裡是get_response的message： ",message,user_input)
     res = {"response":None, "record":None}
     date_keyword = ["date", "earlier", "dates"]
     distance_keyword = ["miles", "mile"]
@@ -87,7 +88,27 @@ def get_response(message,user_input: str,first_time_user =True):
 
     if not first_time_user:
         print("user 之前找過了,調資料出來在幫忙找一次")
+        user_input_datetime = split_user_input_list[0]
+        user_input_zipcode = split_user_input_list[1]
+        #若長度>2,代表user 有input其他資料,確認是不是數字
+        if len(split_user_input_list) > 2 and validation_handler.check_convert_into_num(split_user_input_list[2]):
+            user_input_mile = split_user_input_list[2]
 
+
+        if user_input_datetime and user_input_zipcode and user_input_mile:
+            # res["response"]= "let me check it for you if there's earlier date than the date you are looking for...."
+            res["record"] = [user_input_zipcode,user_input_datetime]
+            nearby_dmvs = dmv_api_handler.get_dmv_office_nearby_within_miles_data_api(user_input_zipcode,float(user_input_mile))
+            print(f"找到附近的dmv 在{user_input_mile}mile內:", nearby_dmvs)
+            res["response"] = format_response(split_user_input_list,nearby_dmvs)
+            print("user提供了datetime and zipcode 並且找到更早的日期： ",format_response(split_user_input_list,nearby_dmvs))
+        elif user_input_datetime and user_input_zipcode:
+            # res["response"]= "let me check it for you if there's earlier date than the date you are looking for...."
+            res["record"] = [user_input_zipcode,user_input_datetime]
+            nearby_dmvs = dmv_api_handler.get_dmv_office_nearby_data_api(user_input_zipcode)
+            print("找到附近的dmv:", nearby_dmvs)
+            res["response"] = format_response(split_user_input_list,nearby_dmvs)
+            print("user提供了datetime and zipcode 並且找到更早的日期： ",format_response(split_user_input_list,nearby_dmvs))
 
     else:
 
@@ -140,7 +161,7 @@ def get_response(message,user_input: str,first_time_user =True):
 
                     res["response"]= "sorry i don't understand....you may provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
             
-        return res
+    return res
 
 
 ##保留前面的紀錄

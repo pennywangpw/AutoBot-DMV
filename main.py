@@ -58,39 +58,59 @@ def remove_punctuation(user_input_string):
     return result
 
 #message functionality- get the response and send to channel
-async def send_message(message: Message, user_message) -> None:
-    print("*****send_message---user_message 應該都要是string: ", message, user_message)
+async def send_message(message: Message, res_obj) -> None:
+    print("*****send_message---res_obj obj: ", message, res_obj)
 
-    global response
     is_private = False
-    if not user_message:
+    if not res_obj:
         print("Message is empty")
         return
 
-    #private response
-    is_private = user_message[0] == "?"
-    if is_private :
-        user_message = user_message[1:]
 
     try:
-        #remove all the punctuation and run user input checker
-        user_message_rmv_punctuation = string_handler.remove_punctuation(user_message)
-        print("拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
 
-        response = get_response(message,user_message_rmv_punctuation)
-
-
-        print("準備紀錄zipcode and date",response)
-        channel = client.get_channel(1186427997851488266)
-        # await message.author.send(response) if is_private else await message.channel.send(response)
-        # await message.author.send(response["response"]) if is_private else await message.channel.send(response["response"])
-        await message.author.send(response["response"]) if is_private else await channel.send(response["response"])
-        return response
+        await message.author.send(res_obj["response"]) if is_private else await channel.send(res_obj["response"])
+        return "the message has been sent"
 
 
     except Exception as e:
         print("有錯誤")
         print(e)
+#old
+# #message functionality- get the response and send to channel
+# async def send_message(message: Message, user_message) -> None:
+#     print("*****send_message---user_message 應該都要是string: ", message, user_message)
+
+#     global response
+#     is_private = False
+#     if not user_message:
+#         print("Message is empty")
+#         return
+
+#     #private response
+#     is_private = user_message[0] == "?"
+#     if is_private :
+#         user_message = user_message[1:]
+
+#     try:
+#         #remove all the punctuation and run user input checker
+#         user_message_rmv_punctuation = string_handler.remove_punctuation(user_message)
+#         print("拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
+
+#         response = get_response(message,user_message_rmv_punctuation)
+
+
+#         print("準備紀錄zipcode and date",response)
+#         channel = client.get_channel(1186427997851488266)
+#         # await message.author.send(response) if is_private else await message.channel.send(response)
+#         # await message.author.send(response["response"]) if is_private else await message.channel.send(response["response"])
+#         await message.author.send(response["response"]) if is_private else await channel.send(response["response"])
+#         return response
+
+
+#     except Exception as e:
+#         print("有錯誤")
+#         print(e)
 
 
  
@@ -178,22 +198,47 @@ async def on_message(message: Message) -> None:
         user_record = database_handler.find_member_record(user_id)
         print("找到 find the member record!!user_record:",user_record)
 
-        user_record_input = date_handler.make_datetime_to_string_format(user_record[2]) + " " +str(user_record[3])
-        print("找到 find the member record!!user_record_input:",user_record_input)
+        #將找到的紀錄convert string 並合併這次的user message
+        user_record_input = date_handler.make_datetime_to_string_format(user_record[2]) + " " +str(user_record[3]) + " " +user_message
+        print("找到 find the member record!!user_record_input在加上user message:",user_record_input)
 
-        #remove all the punctuation and run user input checker
+        #remove all the punctuation to get response
         user_message_rmv_punctuation = string_handler.remove_punctuation(user_record_input)
         print("拿db裡面的user record再拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
-        get_response(user_record_input,user_message_rmv_punctuation, False)
+        res_obj = get_response(user_record_input,user_message_rmv_punctuation, False)
+        print("不是新用戶,拿回來的res: ", res_obj)
+
+        #send message to the channel
+        bot_response = await send_message(message, res_obj)
+
+
+
     else:
-        #在db裡面沒有 member record,確認bot_response 裡面有沒有record?
+        #remove all the punctuation to get response
         print("db 沒有這個 user_id 紀錄 i'm going to insert member record - 先檢查user input message是啥", user_message)
-        bot_response = await send_message(message, user_message)
+        user_message_rmv_punctuation = string_handler.remove_punctuation(user_message)
+        print("拿db裡面的user record再拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
+        res_obj = get_response(user_message,user_message_rmv_punctuation)
+        print("新用戶,拿回來的res: ", res_obj)
+
+        #send message to the channel talk to the user
+        bot_response = await send_message(message, res_obj)
         print("db 沒有這個 user_id 紀錄 i'm going to insert member record - send message 到的 res 回給 chl", bot_response)
 
-        if bot_response["record"]:
-            print("bot_response 有record 代表user 有input valid info", bot_response["record"], type(bot_response["record"]))
-            database_handler.insert_record(user_id,bot_response["record"][1],bot_response["record"][0])
+        #save data in db
+        if res_obj["record"]:
+            print("bot_response 有record 代表user 有input valid info", res_obj["record"], type(res_obj["record"]))
+            database_handler.insert_record(user_id,res_obj["record"][1],res_obj["record"][0])
+
+
+        # #在db裡面沒有 member record,確認bot_response 裡面有沒有record?
+        # print("db 沒有這個 user_id 紀錄 i'm going to insert member record - 先檢查user input message是啥", user_message)
+        # bot_response = await send_message(message, user_message)
+        # print("db 沒有這個 user_id 紀錄 i'm going to insert member record - send message 到的 res 回給 chl", bot_response)
+
+        # if bot_response["record"]:
+        #     print("bot_response 有record 代表user 有input valid info", bot_response["record"], type(bot_response["record"]))
+        #     database_handler.insert_record(user_id,bot_response["record"][1],bot_response["record"][0])
 
 
 

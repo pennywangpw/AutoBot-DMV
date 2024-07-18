@@ -64,6 +64,7 @@ class DMVAPIHandler:
         dmv_office_nearby = []
 
         for office in data:
+            print("檢查type : ", type(miles), type(office["distance"] ))
             if office["distance"] < miles:
                 dmv_office_nearby.append(office)
         return dmv_office_nearby
