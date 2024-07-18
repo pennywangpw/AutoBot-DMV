@@ -97,7 +97,7 @@ def get_response(message,user_input: str,first_time_user =True):
 
         if user_input_datetime and user_input_zipcode and user_input_mile:
             # res["response"]= "let me check it for you if there's earlier date than the date you are looking for...."
-            res["record"] = [user_input_zipcode,user_input_datetime]
+            res["record"] = [user_input_zipcode,user_input_datetime,user_input_mile]
             nearby_dmvs = dmv_api_handler.get_dmv_office_nearby_within_miles_data_api(user_input_zipcode,float(user_input_mile))
             print(f"找到附近的dmv 在{user_input_mile}mile內:", nearby_dmvs)
             res["response"] = format_response(split_user_input_list,nearby_dmvs)

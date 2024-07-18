@@ -68,7 +68,7 @@ async def send_message(message: Message, res_obj) -> None:
 
 
     try:
-
+        channel = client.get_channel(1186427997851488266)
         await message.author.send(res_obj["response"]) if is_private else await channel.send(res_obj["response"])
         return "the message has been sent"
 
@@ -169,7 +169,7 @@ async def on_message(message: Message) -> None:
     print("*****當 user 有輸入任何文字時: ", user_message)
     print("on_message on fire 時候的 response: ", response)
 
-    #確認身份
+    # CHECK THE USER
     # Check if bot is responding itself
     if message.author == client.user:
         print("傳送 message 的是 client 自己")
@@ -190,7 +190,7 @@ async def on_message(message: Message) -> None:
 
     print("查詢member是否已經加入？",database_handler.find_the_member(user_id))
 
-    #確認紀錄
+    # CHECK THE RECORD
     # Check if there's no record in response
     if database_handler.find_member_record(user_id):
         print("在 db 找尋這個 user_id 的紀錄 找到 find the member record!!")
@@ -211,6 +211,11 @@ async def on_message(message: Message) -> None:
         #send message to the channel
         bot_response = await send_message(message, res_obj)
 
+        #save new info in db- update db
+        if res_obj["record"]:
+            print("bot_response 有record 代表user 有input valid info", res_obj["record"], type(res_obj["record"]))
+            # database_handler.insert_record(user_id,res_obj["record"][1],res_obj["record"][0],float(res_obj["record"][2]))
+            database_handler.update_member_record(user_id,res_obj["record"])
 
 
     else:
@@ -229,17 +234,6 @@ async def on_message(message: Message) -> None:
         if res_obj["record"]:
             print("bot_response 有record 代表user 有input valid info", res_obj["record"], type(res_obj["record"]))
             database_handler.insert_record(user_id,res_obj["record"][1],res_obj["record"][0])
-
-
-        # #在db裡面沒有 member record,確認bot_response 裡面有沒有record?
-        # print("db 沒有這個 user_id 紀錄 i'm going to insert member record - 先檢查user input message是啥", user_message)
-        # bot_response = await send_message(message, user_message)
-        # print("db 沒有這個 user_id 紀錄 i'm going to insert member record - send message 到的 res 回給 chl", bot_response)
-
-        # if bot_response["record"]:
-        #     print("bot_response 有record 代表user 有input valid info", bot_response["record"], type(bot_response["record"]))
-        #     database_handler.insert_record(user_id,bot_response["record"][1],bot_response["record"][0])
-
 
 
 
