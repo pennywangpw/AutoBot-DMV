@@ -58,59 +58,68 @@ def remove_punctuation(user_input_string):
     return result
 
 #message functionality- get the response and send to channel
-async def send_message(message: Message, res_obj) -> None:
+async def send_message(message: Message, res_obj,before_work_with_db=False) -> None:
     print("*****send_message---res_obj obj: ", message, res_obj)
+    channel = client.get_channel(1186427997851488266)
 
-    is_private = False
-    if not res_obj:
-        print("Message is empty")
-        return
+    if before_work_with_db :
+        print("回應channel 在work with db")
+        await channel.send("stay with me...let me check it for you...")
+
+    else:
+        is_private = False
+        if not res_obj:
+            print("Message is empty")
+            return
+
+    #     #private response
+    #     is_private = user_message[0] == "?"
+    #     if is_private :
+    #         user_message = user_message[1:]
+
+        try:
+
+            await channel.send("you have search record...let me check it for you again...")
+
+            await message.author.send(res_obj["response"]) if is_private else await channel.send(res_obj["response"])
+            return "the message has been sent"
 
 
-    try:
-        channel = client.get_channel(1186427997851488266)
-        await message.author.send(res_obj["response"]) if is_private else await channel.send(res_obj["response"])
-        return "the message has been sent"
+        except Exception as e:
+            print("something worng when send message to channel....")
+            print(e)
 
 
-    except Exception as e:
-        print("有錯誤")
-        print(e)
-#old
+# #remove punctuation marks
+# def remove_punctuation(user_input_string):
+#     translator = str.maketrans('', '', string.punctuation)
+#     result = user_input_string.translate(translator)
+#     return result
+
 # #message functionality- get the response and send to channel
-# async def send_message(message: Message, user_message) -> None:
-#     print("*****send_message---user_message 應該都要是string: ", message, user_message)
+# async def send_message(message: Message, res_obj) -> None:
+#     print("*****send_message---res_obj obj: ", message, res_obj)
 
-#     global response
 #     is_private = False
-#     if not user_message:
+#     if not res_obj:
 #         print("Message is empty")
 #         return
 
-#     #private response
-#     is_private = user_message[0] == "?"
-#     if is_private :
-#         user_message = user_message[1:]
+# #     #private response
+# #     is_private = user_message[0] == "?"
+# #     if is_private :
+# #         user_message = user_message[1:]
 
 #     try:
-#         #remove all the punctuation and run user input checker
-#         user_message_rmv_punctuation = string_handler.remove_punctuation(user_message)
-#         print("拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
-
-#         response = get_response(message,user_message_rmv_punctuation)
-
-
-#         print("準備紀錄zipcode and date",response)
 #         channel = client.get_channel(1186427997851488266)
-#         # await message.author.send(response) if is_private else await message.channel.send(response)
-#         # await message.author.send(response["response"]) if is_private else await message.channel.send(response["response"])
-#         await message.author.send(response["response"]) if is_private else await channel.send(response["response"])
-#         return response
+#         await message.author.send(res_obj["response"]) if is_private else await channel.send(res_obj["response"])
+#         return "the message has been sent"
 
 
 #     except Exception as e:
-#         print("有錯誤")
+#         print("something worng when send message to channel....")
 #         print(e)
+
 
 
  
@@ -165,6 +174,8 @@ async def on_message(message: Message) -> None:
     user_id = message.author.id
     channel: str = str(message.channel)
 
+    res_obj={}
+
     global response
     print("*****當 user 有輸入任何文字時: ", user_message)
     print("on_message on fire 時候的 response: ", response)
@@ -193,19 +204,23 @@ async def on_message(message: Message) -> None:
     # CHECK THE RECORD
     # Check if there's no record in response
     if database_handler.find_member_record(user_id):
-        print("在 db 找尋這個 user_id 的紀錄 找到 find the member record!!")
-        #用user 的紀錄尋找
+
+        #respond to the user first then work on db
+        first_res_to_channel = await send_message(message, res_obj)
+        print("here's first first_res_to_channel: ",first_res_to_channel)
+
+        #find user record from db
         user_record = database_handler.find_member_record(user_id)
         print("找到 find the member record!!user_record:",user_record)
 
-        #將找到的紀錄convert string 並合併這次的user message
-        user_record_input = date_handler.make_datetime_to_string_format(user_record[2]) + " " +str(user_record[3]) + " " +user_message
-        print("找到 find the member record!!user_record_input在加上user message:",user_record_input)
+        #combine user_record and user_input
+        userrecord_with_userinput = date_handler.make_datetime_to_string_format(user_record[2]) + " " +str(user_record[3]) + " " +user_message
+        print("找到 find the member record!!user_record_input在加上user message:",userrecord_with_userinput)
 
         #remove all the punctuation to get response
-        user_message_rmv_punctuation = string_handler.remove_punctuation(user_record_input)
+        user_message_rmv_punctuation = string_handler.remove_punctuation(userrecord_with_userinput)
         print("拿db裡面的user record再拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
-        res_obj = get_response(user_record_input,user_message_rmv_punctuation, False)
+        res_obj = get_response(userrecord_with_userinput,user_message_rmv_punctuation, False)
         print("不是新用戶,拿回來的res: ", res_obj)
 
         #send message to the channel
@@ -219,6 +234,10 @@ async def on_message(message: Message) -> None:
 
 
     else:
+        #respond to the user first then work on db
+        # first_res_to_channel = await send_message(message, res_obj ,True)
+        # print("here's first first_res_to_channel: ",first_res_to_channel)
+
         #remove all the punctuation to get response
         print("db 沒有這個 user_id 紀錄 i'm going to insert member record - 先檢查user input message是啥", user_message)
         user_message_rmv_punctuation = string_handler.remove_punctuation(user_message)
