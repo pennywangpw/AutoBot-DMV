@@ -21,12 +21,12 @@ string_handler = StringHandler()
 
 
 
-#format response
-def format_response(user_input, nearby_dmv_offices_data):
-    print("這裡是format response: ",user_input, nearby_dmv_offices_data)
+#format response- 
+def format_response(user_input_list, nearby_dmv_offices_data):
+    # print("這裡是format response: ",user_input_list, nearby_dmv_offices_data)
 
     #formated_input_date
-    for num in user_input:
+    for num in user_input_list:
         if validation_handler.check_datetime_formate_validation(num):
             formated_input_date = date_handler.make_string_to_datetime_format(num)
             print("這裡是formated_input_date: ",formated_input_date)
@@ -65,10 +65,10 @@ def format_response(user_input, nearby_dmv_offices_data):
     print("我的response: ",response)
     return response
 
-#改成只有一個params
+#改成只有2個params-string
 #response by user input
 def get_response(user_input: str,first_time_user =True):
-    print("這裡是get_response的message： ",user_input)
+    print("這裡是get_response的message： ",user_input, type(user_input))
     res = {"response":None, "record":None}
     date_keyword = ["date", "earlier", "dates"]
     distance_keyword = ["miles", "mile"]
@@ -83,7 +83,10 @@ def get_response(user_input: str,first_time_user =True):
     #check if user input are all string, and check if it exsits in keyword
     # split_user_input_list = user_input.lower().split()
     # print("get_response正在running...-get response function 裡面 將user input轉乘小寫後: ", split_user_input_list)
-    split_user_input_list = string_handler.lower_words(user_input)
+
+    # split_user_input_list = string_handler.lower_words(user_input)
+    split_user_input_list = user_input.lower().split()
+
     print("get_response正在running...-get response function 裡面 將user input轉乘小寫後: ", split_user_input_list)
     
 
@@ -103,16 +106,17 @@ def get_response(user_input: str,first_time_user =True):
             # res["response"]= "let me check it for you if there's earlier date than the date you are looking for...."
             res["record"] = [user_input_zipcode,user_input_datetime,user_input_mile]
             nearby_dmvs = dmv_api_handler.get_dmv_office_nearby_within_miles_data_api(user_input_zipcode,float(user_input_mile))
-            print(f"format_response{user_input_mile}mile內:", nearby_dmvs) 
+            # print(f"format_response{user_input_mile}mile內:", nearby_dmvs) 
             res["response"] = format_response(split_user_input_list,nearby_dmvs)
             print("user提供了datetime and zipcode 並且找到更早的日期： ",format_response(split_user_input_list,nearby_dmvs))
         elif user_input_datetime and user_input_zipcode:
             # res["response"]= "let me check it for you if there's earlier date than the date you are looking for...."
             res["record"] = [user_input_zipcode,user_input_datetime]
             nearby_dmvs = dmv_api_handler.get_dmv_office_nearby_data_api(user_input_zipcode)
-            print("找到附近的dmv:", nearby_dmvs)
+            # print("找到附近的dmv:", nearby_dmvs)
             res["response"] = format_response(split_user_input_list,nearby_dmvs)
             print("user提供了datetime and zipcode 並且找到更早的日期： ",format_response(split_user_input_list,nearby_dmvs))
+        print("get response裡面的record怎麼計的： ",res["response"] )
 
     else:
 

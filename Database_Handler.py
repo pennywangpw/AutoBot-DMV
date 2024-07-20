@@ -13,7 +13,6 @@ class DatabaseHandler:
         self.cur = None
 
     def connect_to_db(self):
-        print("這裡是直接呼叫db connection..")
         try:
             self.conn = psycopg2.connect(
                 host = self.hostname,

@@ -14,12 +14,14 @@ class StringHandler:
 
     def extract_date_and_zipcode(self,user_input_string):
         remove_punctuation = re.sub(r'[^\w\s]'," ",user_input_string)
-        print("移除其他標點符號： ",remove_punctuation)
         remove_space = remove_punctuation.split()
-        return remove_space
+        print("移除其他標點符號-remove_space： ",remove_space)
 
-    def lower_words(self,user_input_list):
-        return [word.lower() for word in user_input_list]
+        print("移除其他標點符號： ",' '.join(remove_space))
+        return ' '.join(remove_space)
+
+    # def lower_words(self,user_input_list):
+    #     return [word.lower() for word in user_input_list]
         
 
     #combine user input and record
