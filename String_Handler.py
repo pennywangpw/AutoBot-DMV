@@ -1,4 +1,4 @@
-import string
+import string, re
 
 class StringHandler:
     def __init__(self):
@@ -11,6 +11,16 @@ class StringHandler:
         translator = str.maketrans('', '', string.punctuation)
         result = user_input_string.translate(translator)
         return result
+
+    def extract_date_and_zipcode(self,user_input_string):
+        remove_punctuation = re.sub(r'[^\w\s]'," ",user_input_string)
+        print("移除其他標點符號： ",remove_punctuation)
+        remove_space = remove_punctuation.split()
+        return remove_space
+
+    def lower_words(self,user_input_list):
+        return [word.lower() for word in user_input_list]
+        
 
     #combine user input and record
     def combine_userinput_record(self,response,user_message):
