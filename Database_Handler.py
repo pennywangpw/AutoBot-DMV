@@ -1,6 +1,12 @@
 import psycopg2
 import psycopg2.extras
 
+
+from Date_Handler import DateHandler
+
+
+date_handler = DateHandler()
+
 class DatabaseHandler:
     def __init__(self):
         #set up db- credentials
@@ -128,9 +134,7 @@ class DatabaseHandler:
 
     #find record
     def find_member_record(self, user_id):
-        print("在record中找尋～find_member_record check cur and conn: ", self.conn, self.cur)
 
-        print("view_user_record user_id: ",user_id, type(user_id))
         self.cur.execute('SELECT * FROM record WHERE member_id = %s',(user_id,))
         record = self.cur.fetchone()
         print("what I get from record: ", record, type(record))
@@ -142,13 +146,16 @@ class DatabaseHandler:
 
     #update record
     def update_member_record(self, user_id, update_info):
-        print("準備進行改寫....")
+        print("準備進行改寫....: ",update_info)
+        zipcode, datetime, mile = update_info
+        print("===========", date_handler.make_string_to_datetime_format(datetime),int(zipcode),float(mile),user_id,)
         #先找到record後再做改寫
         try:
-            self.cur.execute('UPDATE record SET mile=%s WHERE member_id = %s',(float(update_info[2]),user_id,))
+            # self.cur.execute('UPDATE record SET input_date=%s input_zipcode=%s mile=%s WHERE member_id = %s',(date_handler.make_string_to_datetime_format(datetime),int(zipcode),float(mile),user_id,))
+            self.cur.execute('UPDATE record SET input_date=%s, input_zipcode=%s, mile=%s WHERE member_id=%s',(date_handler.make_string_to_datetime_format(datetime), int(zipcode), float(mile), user_id))
             self.conn.commit()
 
-        except:
-            print("update member record error.....")
+        except Exception as e:
+            print("update member record error.....",e)
 
         return 

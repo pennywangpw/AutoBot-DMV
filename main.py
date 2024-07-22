@@ -199,24 +199,37 @@ async def on_message(message: Message) -> None:
         user_record = database_handler.find_member_record(user_id)
         print("找到 find the member record!!user_record:",user_record)
 
+        #get user_record_datetime , user_record_zipcode , user_record_mile
+        user_record_datetime =user_record[2]
+        user_record_zipcode =user_record[3]
+        user_record_mile =user_record[4]
+
+
 
         #remove all the punctuation from user_message
         user_message_rmv_punctuation = string_handler.extract_date_and_zipcode(user_message)
         print("這是用regex解決拿db裡面的user record再拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
 
-        #combine user_record and user_message
-        user_record_with_userinput = date_handler.make_datetime_to_string_format(user_record[2]) + " " +str(user_record[3]) + " " +user_message_rmv_punctuation
-        print("找到 find the member record!!user_record_input在加上user message:",user_record_with_userinput)
+        #conver user_message_rmv_punctuation to list 確認user_message是不是同找到資料的格式,是的話複寫
+        user_message_rmv_punctuation_list = user_message_rmv_punctuation.split()
+        for word in user_message_rmv_punctuation_list:
+            if validation_handler.check_convert_into_num(word) and validation_handler.check_length_zipcode_input_validtion(word):
+                user_record_zipcode = word
+            elif validation_handler.check_datetime_formate_validation(word):
+                user_record_datetime = date_handler.make_string_to_datetime_format(word)
+            else:
+                user_record_mile = word
+
+
+        #convert updated user_record_datetime, user_record_zipcode, user_record_mile to string 
+        user_record_with_userinput = date_handler.make_datetime_to_string_format(user_record_datetime) + " " +str(user_record_zipcode) + " " + str(user_record_mile)
 
         #remove all the punctuation to get response
         # user_message_rmv_punctuation = string_handler.remove_punctuation(user_record_with_userinput)
         
 
-
-
-
         res_obj = get_response(user_record_with_userinput, False)
-        # print("不是新用戶,拿回來的res: ", res_obj)
+
 
         #send message to the channel
         bot_response = await send_message(message, res_obj)

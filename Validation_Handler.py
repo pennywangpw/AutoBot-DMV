@@ -5,21 +5,6 @@ class ValidationHandler:
     def __init__(self):
         pass
 
-    def check_if_all_str(self,user_input):
-        for word in user_input:
-            if not isinstance(word,str):
-                return False
-        return True
-
-    #check if the each word in user_input can be changed to number
-    def check_is_num(self,user_input):
-        for word in user_input:
-            try:
-                int(word)
-            except:
-                return False
-        return True
-
     #check if the word can be changed to number
     def check_convert_into_num(self,word):
         res = False
@@ -45,38 +30,38 @@ class ValidationHandler:
         except:
             return False
 
-    #date and zipcode input validation
-    def date_zipcode_input_validation(self,input_date,input_zipcode):
-        if not isinstance(input_date,str):
+    # #date and zipcode input validation
+    # def date_zipcode_input_validation(self,input_date,input_zipcode):
+    #     if not isinstance(input_date,str):
 
-            return "The input_date should be a string type with YYYY-MM-DD"
-        elif not isinstance(input_zipcode, int):
+    #         return "The input_date should be a string type with YYYY-MM-DD"
+    #     elif not isinstance(input_zipcode, int):
 
-            return "Invalid zipcode"
-        else:
-            try:
-                date_obj = datetime.strptime(input_date, "%Y-%m-%d")
+    #         return "Invalid zipcode"
+    #     else:
+    #         try:
+    #             date_obj = datetime.strptime(input_date, "%Y-%m-%d")
 
-            except ValueError as e:
-                return e
+    #         except ValueError as e:
+    #             return e
 
-    #return datetime and zipcode 
-    def check_zipcode_datetime_provided_and_valid(self,user_input):
-        print("確認是否有zipcode and datetime")
-        input_zipcode= None
-        input_datetime= None
-        for word in user_input:
-            if self.check_length_zipcode_input_validtion(word):
-                input_zipcode = int(word)
-            else:
-                datetime_obj = self.check_datetime_formate_validation(word)
-                print("i don't understand what i get datetime_obj: ",datetime_obj)
-                if datetime_obj is not None:
-                    input_datetime = datetime_obj
+    # #return datetime and zipcode 
+    # def check_zipcode_datetime_provided_and_valid(self,user_input):
+    #     print("確認是否有zipcode and datetime")
+    #     input_zipcode= None
+    #     input_datetime= None
+    #     for word in user_input:
+    #         if self.check_length_zipcode_input_validtion(word):
+    #             input_zipcode = int(word)
+    #         else:
+    #             datetime_obj = self.check_datetime_formate_validation(word)
+    #             print("i don't understand what i get datetime_obj: ",datetime_obj)
+    #             if datetime_obj is not None:
+    #                 input_datetime = datetime_obj
 
-        if input_zipcode != None and input_datetime != None:
-            print(input_zipcode,input_datetime,type(input_zipcode),type(input_datetime))
-            return input_zipcode,input_datetime
+    #     if input_zipcode != None and input_datetime != None:
+    #         print(input_zipcode,input_datetime,type(input_zipcode),type(input_datetime))
+    #         return input_zipcode,input_datetime
 
 
 
