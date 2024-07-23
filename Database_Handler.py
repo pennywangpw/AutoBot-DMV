@@ -29,7 +29,7 @@ class DatabaseHandler:
             )
             self.cur = self.conn.cursor(cursor_factory = psycopg2.extras.DictCursor)
 
-            #clean up db to drop the table 
+            #clean up db to drop the table
             self.cur.execute('DROP TABLE IF EXISTS record')
             self.cur.execute('DROP TABLE IF EXISTS member')
 
@@ -77,7 +77,7 @@ class DatabaseHandler:
 
     def get_db_cursor(self):
         return self.cur
-        
+
     def close_db(self):
         if self.cur is not None:
             self.cur.close()
@@ -114,7 +114,7 @@ class DatabaseHandler:
         except Exception as error:
             print("insert_record error: ",error)
 
-    
+
     #find a member
     def find_the_member(self, user_id):
 
