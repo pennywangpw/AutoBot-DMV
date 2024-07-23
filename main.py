@@ -7,7 +7,6 @@ import string, datetime, asyncio
 from String_Handler import StringHandler
 from Database_Handler import DatabaseHandler
 from Validation_Handler import ValidationHandler
-from DMV_API_Handler import DMVAPIHandler
 from Date_Handler import DateHandler
 import asyncpg
 import psycopg2
@@ -16,27 +15,15 @@ from asyncpg.pool import create_pool
 
 
 
-
 # get token
 load_dotenv()
 TOKEN: Final[str] = os.getenv('TOKEN')
-print("main裡面的token: ",TOKEN)
 
 
 # set up bot
 intents: Intents = Intents.default()
 intents.message_content = True
 client: Client = Client(intents=intents)
-
-
-# #set up db- credentials
-# hostname ="127.0.0.1"
-# database = "dmv_bot"
-# username = "postgres"
-# pwd = "postgres"
-# port_id = 5432
-# conn = None
-# cur = None
 
 
 #set a response to track if there's record or not
@@ -47,7 +34,6 @@ print("一起動時的response: ", response)
 # create string_handler and database_handler instance
 string_handler = StringHandler()
 database_handler= DatabaseHandler()
-dmv_api_handler = DMVAPIHandler()
 date_handler = DateHandler()
 validation_handler= ValidationHandler()
 
@@ -78,38 +64,6 @@ async def send_message(message: Message, res_obj) -> None:
     except Exception as e:
         print("something worng when send message to channel....")
         print(e)
-
-
-# #remove punctuation marks
-# def remove_punctuation(user_input_string):
-#     translator = str.maketrans('', '', string.punctuation)
-#     result = user_input_string.translate(translator)
-#     return result
-
-# #message functionality- get the response and send to channel
-# async def send_message(message: Message, res_obj) -> None:
-#     print("*****send_message---res_obj obj: ", message, res_obj)
-
-#     is_private = False
-#     if not res_obj:
-#         print("Message is empty")
-#         return
-
-# #     #private response
-# #     is_private = user_message[0] == "?"
-# #     if is_private :
-# #         user_message = user_message[1:]
-
-#     try:
-#         channel = client.get_channel(1186427997851488266)
-#         await message.author.send(res_obj["response"]) if is_private else await channel.send(res_obj["response"])
-#         return "the message has been sent"
-
-
-#     except Exception as e:
-#         print("something worng when send message to channel....")
-#         print(e)
-
 
 
  
@@ -166,38 +120,29 @@ async def on_message(message: Message) -> None:
 
     res_obj={}
 
-    global response
-    print("*****當 user 有輸入任何文字時: ", user_message)
-    print("on_message on fire 時候的 response: ", response)
 
     # CHECK THE USER
     # Check if bot is responding itself
     if message.author == client.user:
-        print("傳送 message 的是 client 自己")
         print("--------------END---------------")
         return
 
     print("傳送 message 不是 client 自己: ", user_id)
-    # Check if current user exists in db member
-    if database_handler.find_the_member(user_id):
-        print("current user 存在 db member")
-    else:
-        print("current user 不存在 db member- 我必須要鍵入db")
+
+    # Check if current user exists in db member, if not db ++
+    if not database_handler.find_the_member(user_id):
+
         # Insert data in table
-        user_email = username + '@sporton.com'
-        database_handler.connect_to_db()
-        print("存入 user_id, user_email, username： ", user_id, user_email, username, type(user_id))
+        user_email = username + '@sp.com'
         database_handler.insert_member(user_id, user_email, username)
 
-    print("查詢member是否已經加入？",database_handler.find_the_member(user_id))
 
     # CHECK THE RECORD
-    # Check if there's no record in response
     if database_handler.find_member_record(user_id):
 
         #find user record from db
         user_record = database_handler.find_member_record(user_id)
-        print("找到 find the member record!!user_record:",user_record)
+
 
         #get user_record_datetime , user_record_zipcode , user_record_mile
         user_record_datetime =user_record[2]
@@ -206,9 +151,9 @@ async def on_message(message: Message) -> None:
 
 
 
-        #remove all the punctuation from user_message
-        user_message_rmv_punctuation = string_handler.extract_date_and_zipcode(user_message)
-        print("這是用regex解決拿db裡面的user record再拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
+        #remove all the punctuation from user_message (user input)
+        user_message_rmv_punctuation = string_handler.remove_punctuation(user_message)
+
 
         #conver user_message_rmv_punctuation to list 確認user_message是不是同找到資料的格式,是的話複寫
         user_message_rmv_punctuation_list = user_message_rmv_punctuation.split()
@@ -224,8 +169,6 @@ async def on_message(message: Message) -> None:
         #convert updated user_record_datetime, user_record_zipcode, user_record_mile to string 
         user_record_with_userinput = date_handler.make_datetime_to_string_format(user_record_datetime) + " " +str(user_record_zipcode) + " " + str(user_record_mile)
 
-        #remove all the punctuation to get response
-        # user_message_rmv_punctuation = string_handler.remove_punctuation(user_record_with_userinput)
         
 
         res_obj = get_response(user_record_with_userinput, False)
@@ -236,8 +179,6 @@ async def on_message(message: Message) -> None:
 
         #save new info in db- update db
         if res_obj["record"]:
-            print("bot_response 有record 代表user 有input valid info", res_obj["record"], type(res_obj["record"]))
-            # database_handler.insert_record(user_id,res_obj["record"][1],res_obj["record"][0],float(res_obj["record"][2]))
             database_handler.update_member_record(user_id,res_obj["record"])
 
 
@@ -245,83 +186,18 @@ async def on_message(message: Message) -> None:
 
 
         #remove all the punctuation to get response
-        print("db 沒有這個 user_id 紀錄 i'm going to insert member record - 先檢查user input message是啥", user_message)
-        # user_message_rmv_punctuation = string_handler.remove_punctuation(user_message)
-        user_message_rmv_punctuation = string_handler.extract_date_and_zipcode(user_message)
+        user_message_rmv_punctuation = string_handler.remove_punctuation(user_message)
 
-        print("拿db裡面的user record再拿掉標點符號的樣子ˋ,",user_message_rmv_punctuation)
 
         res_obj = get_response(user_message_rmv_punctuation)
-        print("新用戶,拿回來的res: ", res_obj)
-
+  
         #send message to the channel talk to the user
         bot_response = await send_message(message, res_obj)
-        print("db 沒有這個 user_id 紀錄 i'm going to insert member record - send message 到的 res 回給 chl", bot_response)
+
 
         #save data in db
         if res_obj["record"]:
-            print("bot_response 有record 代表user 有input valid info", res_obj["record"], type(res_obj["record"]))
             database_handler.insert_record(user_id,res_obj["record"][1],res_obj["record"][0])
-
-
-
-# # handle incoming messages
-# @client.event
-# async def on_message(message: Message)-> None:
-
-#     username: str = str(message.author)
-#     user_message: str = message.content
-#     user_id = message.author.id
-#     channel: str = str(message.channel)
-
-#     global response
-#     print("*****當user有輸入任何文字時: ",user_message)
-#     print("on_message on fire時候的response: ", response)
-#     # check if bot is responding itself
-#     if message.author == client.user:
-#         print("傳送message的是client自己")
-#         print("--------------END---------------")
-#         return
-
-#     print("傳送message 不是client自己: ", user_id)
-#     #check if current user exists in db member
-#     if database_handler.find_the_member(user_id):
-#         print("current user 存在 db member")
-#     else:
-#         print("current user 不存在 db member")
-#         #insert data in table
-#         user_email = username + '@sporton.com'
-#         print("存入user_id,user_email,username： ",user_id,user_email,username, type(user_id))
-#         database_handler.insert_member(user_id,user_email,username)
-
-#     # print(f"[{channel}] {username}: '{user_message}'")
-
-#     #check if there's no record in response
-#     if database_handler.find_member_record(user_id):
-#         print("在db找尋這個userid 的紀錄 找到find the member record!!")
-#     else:
-#         print("db沒有這個userid 紀錄i'm going to insert member record" )
-
-#         #檢查user有沒又提供zipcode , date
-#         bot_response = await send_message(message,user_message)
-#         print("db沒有這個userid 紀錄i'm going to insert member record- send message到的res回給chl" ,bot_response)
-#         # print("end message到的res回給chl附帶了res record" ,bot_response["record"])
-
-        
-#         # #insert record
-#         # test_datetime = bot_response["record"]["datetime"]
-#         # test_zipcode = bot_response["record"]["zipcode"]
-
-#         # database_handler.insert_record(user_id ,test_datetime, test_zipcode)
-
-#         database_handler.connect_to_db()
-#         test = ["20240615","95035"]
-#         test_zipcode,test_datetime =  validation_handler.check_zipcode_datetime_provided_and_valid(test)
-#         database_handler.insert_record(user_id ,test_datetime, test_zipcode)
-
-#         print("in main what response i got: ", bot_response)
-    
-
 
 
 

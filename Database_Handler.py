@@ -87,7 +87,6 @@ class DatabaseHandler:
 
     #create a member
     def insert_member(self,user_id,email,name):
-        print("insert_member check cur and conn: ", self.conn, self.cur)
         try:
             #insert data in table
             insert_script = 'INSERT INTO member (id,name,email) VALUES(%s,%s,%s)'
@@ -95,14 +94,13 @@ class DatabaseHandler:
             for val in insert_values:
                 self.cur.execute(insert_script,val)
                 self.conn.commit()
-            print("成功存入new member insert successfully!!", email , name)
+            print("new member insert successfully!!", email , name)
         except Exception as error:
-            print("存入新成員有問題insert_member error: ",error)
+            print("db-insert_member error: ",error)
 
     #create a record
     def insert_record(self,user_id,input_date, input_zipcode, mile=0):
-        print("insert_record--user_id,input_date, input_zipcode, mile: ",user_id,input_date, input_zipcode, mile)
-        print("insert_record check cur and conn: ", self.conn, self.cur)
+
         try:
             # Check if the member exists
             if not self.find_the_member(user_id):
@@ -119,36 +117,25 @@ class DatabaseHandler:
     
     #find a member
     def find_the_member(self, user_id):
-        print("find_the_member check cur and conn: ", self.conn, self.cur)
 
-        print("find_the_member user_id: ",user_id, type(user_id))
         self.cur.execute('SELECT * FROM member WHERE id = %s',(user_id,))
         member = self.cur.fetchone()
-        print("find the member: ", member)
+
         return member is not None
-        # print("find the member: ", member)
-        # if member is not None:
-        #     return True
-        # else:
-        #     return False
+ 
 
     #find record
     def find_member_record(self, user_id):
-
         self.cur.execute('SELECT * FROM record WHERE member_id = %s',(user_id,))
         record = self.cur.fetchone()
-        print("what I get from record: ", record, type(record))
+
         return record 
-        # print("what i get from record: ", record)
-        # if record is not None:
-        #     return True
-        # return False
+
 
     #update record
     def update_member_record(self, user_id, update_info):
-        print("準備進行改寫....: ",update_info)
         zipcode, datetime, mile = update_info
-        print("===========", date_handler.make_string_to_datetime_format(datetime),int(zipcode),float(mile),user_id,)
+
         #先找到record後再做改寫
         try:
             # self.cur.execute('UPDATE record SET input_date=%s input_zipcode=%s mile=%s WHERE member_id = %s',(date_handler.make_string_to_datetime_format(datetime),int(zipcode),float(mile),user_id,))
