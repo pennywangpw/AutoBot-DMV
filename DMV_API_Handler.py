@@ -1,4 +1,5 @@
 import requests, datetime
+from datetime import datetime
 
 class DMVAPIHandler:
     def __init__(self):
@@ -31,7 +32,12 @@ class DMVAPIHandler:
     #API- find available time slot
     def get_time_slot_data_api(self,dmv_field_office_public_id,datetime):
 
-        date = datetime.strftime("%Y-%m-%d")
+        # date = datetime.strftime("%Y-%m-%d")
+
+        # url = f"https://www.dmv.ca.gov/portal/wp-json/dmv/v1/appointment/branches/{dmv_field_office_public_id}/times?date={date}&services[]=DL!b94ae07d48f4d0cff89b6fc0e0c9aea5fa2a47d11728311b7adccdef2c728&numberOfCustomers=1&ver=867712719559.5795"
+
+        date = datetime[:4] + "-" + datetime[4:6] + "-" + datetime[6:]
+
         url = f"https://www.dmv.ca.gov/portal/wp-json/dmv/v1/appointment/branches/{dmv_field_office_public_id}/times?date={date}&services[]=DL!b94ae07d48f4d0cff89b6fc0e0c9aea5fa2a47d11728311b7adccdef2c728&numberOfCustomers=1&ver=867712719559.5795"
 
         response = requests.get(url)

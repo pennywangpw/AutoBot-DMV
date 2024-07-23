@@ -1,6 +1,12 @@
 import psycopg2
 import psycopg2.extras
 
+
+from Date_Handler import DateHandler
+
+
+date_handler = DateHandler()
+
 class DatabaseHandler:
     def __init__(self):
         #set up db- credentials
@@ -27,19 +33,33 @@ class DatabaseHandler:
             self.cur.execute('DROP TABLE IF EXISTS record')
             self.cur.execute('DROP TABLE IF EXISTS member')
 
-
-            #create table- member
+            # create table- member
             create_member_script = '''CREATE TABLE IF NOT EXISTS member(
-                                id bigint UNIQUE,
-                                name varchar(30) NOT NULL,
-                                email varchar(80) NOT NULL UNIQUE)'''
+                                    id bigint PRIMARY KEY,
+                                    name varchar(30) NOT NULL,
+                                    email varchar(80) NOT NULL UNIQUE)'''
 
             create_record_script = '''CREATE TABLE IF NOT EXISTS record(
-                                member_id bigint UNIQUE,
-                                input_date date NOT NULL,
-                                input_zipcode int NOT NULL,
-                                mile int,
-                                FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE)'''
+                                    id SERIAL PRIMARY KEY,
+                                    member_id bigint,
+                                    input_date date NOT NULL,
+                                    input_zipcode int NOT NULL,
+                                    mile int,
+                                    FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE)'''
+
+            # #create table- member
+            # create_member_script = '''CREATE TABLE IF NOT EXISTS member(
+            #                     id bigint UNIQUE,
+            #                     name varchar(30) NOT NULL,
+            #                     email varchar(80) NOT NULL UNIQUE)'''
+
+            # #create table- record
+            # create_record_script = '''CREATE TABLE IF NOT EXISTS record(
+            #                     member_id bigint UNIQUE,
+            #                     input_date date NOT NULL,
+            #                     input_zipcode int NOT NULL,
+            #                     mile int,
+            #                     FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE)'''
 
             self.cur.execute(create_member_script)
             self.cur.execute(create_record_script)
@@ -51,7 +71,7 @@ class DatabaseHandler:
             print(error)
 
 
-    def run_query(query):
+    def run_query(self,query):
         self.cur.execute(query)
 
 
@@ -67,7 +87,6 @@ class DatabaseHandler:
 
     #create a member
     def insert_member(self,user_id,email,name):
-        print("insert_member check cur and conn: ", self.conn, self.cur)
         try:
             #insert data in table
             insert_script = 'INSERT INTO member (id,name,email) VALUES(%s,%s,%s)'
@@ -75,15 +94,18 @@ class DatabaseHandler:
             for val in insert_values:
                 self.cur.execute(insert_script,val)
                 self.conn.commit()
-            print("insert successfully!!", email , name)
+            print("new member insert successfully!!", email , name)
         except Exception as error:
-            print("insert_member error: ",error)
+            print("db-insert_member error: ",error)
 
     #create a record
     def insert_record(self,user_id,input_date, input_zipcode, mile=0):
-        print("insert_record--user_id,input_date, input_zipcode, mile: ",type(user_id),type(input_date), type(input_zipcode), type(mile))
-        print("insert_record check cur and conn: ", self.conn, self.cur)
+
         try:
+            # Check if the member exists
+            if not self.find_the_member(user_id):
+                raise ValueError(f"Member with ID {user_id} does not exist.")
+            
             insert_script = 'INSERT INTO record (member_id,input_date,input_zipcode,mile) VALUES(%s,%s,%s,%s)'
             insert_values=(user_id,input_date, input_zipcode, mile)
             self.cur.execute(insert_script,insert_values)
@@ -95,25 +117,32 @@ class DatabaseHandler:
 
     #find a member
     def find_the_member(self, user_id):
-        print("find_the_member check cur and conn: ", self.conn, self.cur)
 
-        print("find_the_member user_id: ",user_id, type(user_id))
         self.cur.execute('SELECT * FROM member WHERE id = %s',(user_id,))
         member = self.cur.fetchone()
-        print("find the member: ", member)
-        if member is not None:
-            return True
-        else:
-            return False
+
+        return member is not None
+ 
 
     #find record
     def find_member_record(self, user_id):
-        print("find_member_record check cur and conn: ", self.conn, self.cur)
-
-        print("view_user_record user_id: ",user_id, type(user_id))
         self.cur.execute('SELECT * FROM record WHERE member_id = %s',(user_id,))
         record = self.cur.fetchone()
-        print("what i get from record: ", record)
-        if record is not None:
-            return True
-        return False
+
+        return record 
+
+
+    #update record
+    def update_member_record(self, user_id, update_info):
+        zipcode, datetime, mile = update_info
+
+        #先找到record後再做改寫
+        try:
+            # self.cur.execute('UPDATE record SET input_date=%s input_zipcode=%s mile=%s WHERE member_id = %s',(date_handler.make_string_to_datetime_format(datetime),int(zipcode),float(mile),user_id,))
+            self.cur.execute('UPDATE record SET input_date=%s, input_zipcode=%s, mile=%s WHERE member_id=%s',(date_handler.make_string_to_datetime_format(datetime), int(zipcode), float(mile), user_id))
+            self.conn.commit()
+
+        except Exception as e:
+            print("update member record error.....",e)
+
+        return 

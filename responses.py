@@ -5,37 +5,40 @@ from Date_Handler import DateHandler
 import requests, datetime
 from datetime import datetime
 from Database_Handler import DatabaseHandler
+import datetime
 
 validation_handler= ValidationHandler()
 dmv_api_handler = DMVAPIHandler()
 date_handler = DateHandler()
+database_handler= DatabaseHandler()
 
 res = {"response":None, "record":None}
 
 
-database_handler= DatabaseHandler()
 
-#compare user input date and earliest available date in zipcode area to find the earlier date
-def find_earliest_date(formated_input_date,formated_date_from_all_list, office_obj):
-    return date_handler.find_earlier_date_than_user_input(formated_input_date,formated_date_from_all_list, office_obj)
 
-#format response
-def format_response(user_input, nearby_dmv_offices_data):
+#format response- 
+def format_response(user_input_list, nearby_dmv_offices_data):
 
     #formated_input_date
-    for num in user_input:
+    for num in user_input_list:
         if validation_handler.check_datetime_formate_validation(num):
-            formated_input_date = date_handler.make_string_to_datetime_formate(num)
+            formated_input_date = date_handler.make_string_to_datetime_format(num)
+
 
 
     #iterate through the data to format the res
     for office in nearby_dmv_offices_data:
         #find earliest date in the office
         earliest_available_date= dmv_api_handler.get_date_data_api(office['meta']['dmv_field_office_public_id'])
-        office["earliest_available_date"] = date_handler.make_datetime_formate(earliest_available_date)
 
-        information = find_earliest_date(formated_input_date,office["earliest_available_date"],office)
+        office["earliest_available_date"] = date_handler.make_string_to_datetime_format(earliest_available_date)
+
+        information = date_handler.find_earlier_date_than_user_input(formated_input_date, office["earliest_available_date"], office)
+
+
         office["information"] = information
+
 
     #check each office in nearby_dmv_office_data if it has earlier date
     checked_nearby_dmv_offices_data = []
@@ -51,139 +54,83 @@ def format_response(user_input, nearby_dmv_offices_data):
     # response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in checked_nearby_dmv_offices_data]) + "\n you may also provide specific miles (i.e. 7 miles) AND zipcode AND date, the bot will find earlier date within specific miles for you."
     response = msg_to_user + "\n".join([f"-------------\n{office['information']}\n" for office in checked_nearby_dmv_offices_data]) + "\n you may also provide specific miles (i.e. 7 miles) the bot will find earlier date within specific miles for you."
 
-    print("我的response: ",response)
     return response
 
-
-#check user input
-def check_user_input(user_input):
-    print("check_user_input: ", check_user_input)
-    date_keyword = ["date", "earlier", "dates"]
-    distance_keyword = ["miles", "mile"]
-    greeting_keyword = ["hello","hi","hey"]
-    no_record_keyword = "theres no previous record"
-
-    #check user input includes 1.date 2. zipcode are provided and valid
-    if_in_keyword = False
-    if_date_and_zipcode = False
-    split_user_input_list = user_input.lower().split()
-    print("get response function 裡面 將user input轉乘小寫後: ", split_user_input_list)
-    valid_date_zipcode = valid_date_zipcode
-
-    if valid_date_zipcode != None:
-        input_zipcode = valid_date_zipcode[0]
-        input_datetime = valid_date_zipcode[1]
-        return input_datetime,input_zipcode
-    
-    # #check user input includes any keywords above
-    # for word in user_input:
-    #     if word in greeting_keyword:
-    #         if_in_keyword = True
-    #         # return "Hello there! How can I help you ?"
-    #         res["response"]= "Hello there! How can I help you ?"
-    #         return res
-    #     elif word in date_keyword:
-    #         if_in_keyword = True
-    #         # return f"Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
-    #         res["response"]= "Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
-    #         return res
-    #     elif word in distance_keyword:
-    #         if_in_keyword = True
-    #         # return f"Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
-    #         res["response"]= "Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
-    #         return res
-        
-
-#response by user input
-def get_response(message,user_input: str):
+#改成只有2個params-string
+#response by user input, taking organized user input
+def get_response(user_input: str,first_time_user =True):
     res = {"response":None, "record":None}
+
     date_keyword = ["date", "earlier", "dates"]
     distance_keyword = ["miles", "mile"]
     greeting_keyword = ["hello","hi","hey"]
-    no_record_keyword = "theres no previous record"
 
-    #check user input includes two datas -> 1.date 3. zipcode
-    if_in_keyword = False
-    if_date_and_zipcode = False
+    user_input_datetime =""
+    user_input_zipcode =""
+    user_input_mile = 0
+
+
+    #convert user_input to list and lower case
     split_user_input_list = user_input.lower().split()
-    print("get response function 裡面 將user input轉乘小寫後: ", split_user_input_list)
 
+    
+    if not first_time_user:
+        #get user_record_datetime, user_record_zipcode, user_record_mile
+        user_input_datetime = split_user_input_list[0]
+        user_input_zipcode = split_user_input_list[1]
+        user_input_mile = int(split_user_input_list[2])
 
-    input_zipcode = None
-    input_datetime = None
-    mile_range = None
+        if user_input_datetime and user_input_zipcode and user_input_mile != 0:
+            res["record"] = [user_input_zipcode,user_input_datetime,user_input_mile]
+            nearby_dmvs = dmv_api_handler.get_dmv_office_nearby_within_miles_data_api(user_input_zipcode,float(user_input_mile))
 
-    valid_date_zipcode = validation_handler.check_zipcode_datetime_provided_and_valid(split_user_input_list)
+            res["response"] = format_response(split_user_input_list,nearby_dmvs)
 
-    #if all word in split_user_input_list are numbers
-    if validation_handler.check_is_num(split_user_input_list) and valid_date_zipcode != None:
-        if_date_and_zipcode = True
-        input_zipcode = valid_date_zipcode[0]
-        input_datetime = valid_date_zipcode[1]
-        cursor = database_handler.get_db_cursor()
-        print("check if cursor is still alive: ",cursor)
-    #split_user_input_list includes string
+        # make sure at least datetime and zipcode are provided so that we can store in db
+        elif user_input_datetime and user_input_zipcode:
+
+            res["record"] = [user_input_zipcode,user_input_datetime,user_input_mile]
+            nearby_dmvs = dmv_api_handler.get_dmv_office_nearby_data_api(user_input_zipcode)
+
+            res["response"] = format_response(split_user_input_list,nearby_dmvs)
+
     else:
-
-
-        #check if date and zipcode are provided
-        if valid_date_zipcode!= None:
-            input_zipcode = valid_date_zipcode[0]
-            input_datetime = valid_date_zipcode[1]
-            if_date_and_zipcode = True
-        #check if there's no record
-        if split_user_input_list == no_record_keyword:
-            print("相等沒有任何record紀錄 不知道要怎麼幫忙")
-            if_in_keyword = True
-            res["response"]= "Hello there! How can I help you ?"
-            return res
-
+        
+        #iterate through list to check each word if it matches zipcode or datetime format
+        #user might input: hello, 95035, 20240909
         for word in split_user_input_list:
-            #find the miles information
-            mile_range = validation_handler.find_mile_range(split_user_input_list)
-            print("處理後的mileage: ", mile_range)
+            if validation_handler.check_convert_into_num(word) and validation_handler.check_length_zipcode_input_validtion(word):
 
-            if mile_range and input_datetime and input_zipcode:
-                dmv_office_within_miles_data = dmv_api_handler.get_dmv_office_nearby_within_miles_data_api(input_zipcode, int(mile_range))
-                # return format_response(split_user_input_list,dmv_office_within_miles_data)
-                res["response"] = format_response(split_user_input_list,dmv_office_within_miles_data)
-                res["record"] = {"zipcode": input_zipcode,"datetime": input_datetime,"mile_range": mile_range}
-                print("3個都有資料-zipcode datetime mile_range: ", mile_range)
-                return res
-            elif word in greeting_keyword:
-                if_in_keyword = True
-                # return "Hello there! How can I help you ?"
-                res["response"]= "Hello there! How can I help you ?"
-                return res
-            elif word in date_keyword:
-                if_in_keyword = True
-                # return f"Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
-                res["response"]= "Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
-                return res
-            elif word in distance_keyword:
-                if_in_keyword = True
-                # return f"Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
-                res["response"]= "Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
-                return res
+                user_input_zipcode = word
+            elif validation_handler.check_datetime_formate_validation(word):
+
+                user_input_datetime = word
+        
+        #check if user input are valid datetime and valid zipcode,store in res["record"]
+        if user_input_datetime and user_input_zipcode:
+            res["record"] = [user_input_zipcode,user_input_datetime]
+            nearby_dmvs = dmv_api_handler.get_dmv_office_nearby_data_api(user_input_zipcode)
+
+            res["response"] = format_response(split_user_input_list,nearby_dmvs)
 
 
+        else:
+            #ｃheck if the word is in the keyword to send the corresponding response
+            for word in split_user_input_list:
 
-    #checking if is valid user input
-    #if not in keyword lists OR not valid date and zipcode
-    if not (if_in_keyword or if_date_and_zipcode):
-        # res["response"]=choice(['I do not understand... How can I help you?','Do you mind rephrasing that? How can I help you?'])
-        res["response"]= 'Do you mind rephrasing that? How can I help you?'
+                if word in greeting_keyword:
+                    res["response"]= "Hello there! How can I help you ?"
+                    break
 
-        return res
+                elif word in date_keyword:
+                    res["response"]= "Hey ~ Please provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date for you"
+                    break
 
-    #if both numbers- zipcode and dates are provided
-    else:
-        for num in split_user_input_list:
-            if validation_handler.check_length_zipcode_input_validtion(num):
-                zipcode = int(num)
-                nearby_dmv_offices_data =  dmv_api_handler.get_dmv_office_nearby_data_api(zipcode)
-                #format response data AND related record
-                # return format_response(split_user_input_list,nearby_dmv_offices_data)
-                res["response"] = format_response(split_user_input_list,nearby_dmv_offices_data)
-                res["record"] = {"zipcode": input_zipcode,"datetime": input_datetime,"mile_range": mile_range}
-                return res
+                elif word in distance_keyword:
+                    res["response"]= "Hey ~ Please provide the date(YYYY-MM-DD) zipcode (i.e. 98087) specific mile(i.e. 7 miles)"
+                    break
+
+                else:
+                    res["response"]= "sorry i don't understand....you may provide the date you have (YYYY-MM-DD) and zipcode (i.e. 98087).  I can try to find if there's earlier date near you"
+            
+    return res
